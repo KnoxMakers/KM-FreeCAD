@@ -19,9 +19,15 @@ tool_shape_dir = os.path.join(freecad_dir, "Tools", "Shape")
 tools_root_dir = os.path.join(freecad_dir, "Tools")  # Root of Tools directory
 default_tool_lib_file = os.path.join(tool_lib_dir, "NibblerBOT.fctl")
 gcode_dir = os.path.join(freecad_dir, "Gcode")  # Gcode directory
+camcheck_dir = os.path.join(freecad_dir, "CAMCheck")  # CamCheck directory
+classes_dir = os.path.join(freecad_dir, "Classes")
+course_dir = os.path.join(classes_dir, "FreeCAD CAM 101 - Intro to CAM")
+lesson1_dir = os.path.join(course_dir, "Lesson 1")
+lesson2_dir = os.path.join(course_dir, "Lesson 2")
+lesson3_dir = os.path.join(course_dir, "Lesson 3")
 
 # Ensure directories exist
-for path in [tool_bit_dir, tool_lib_dir, tool_shape_dir, gcode_dir]:
+for path in [tool_bit_dir, tool_lib_dir, tool_shape_dir, gcode_dir, camcheck_dir, classes_dir, course_dir, lesson1_dir, lesson2_dir, lesson3_dir]:
     if not os.path.exists(path):
         os.makedirs(path)
         print(f"Created directory: {path}")
@@ -109,6 +115,9 @@ source_subdirs = {
     "Tools/Shape": tool_shape_dir,
     "PostProcessor": os.path.join(FreeCAD.getUserAppDataDir(), "Macro"),
     "jobs": freecad_dir,
+    "Classes/FreeCAD CAM 101 - Intro to CAM/Lesson 1": lesson1_dir,
+    "Classes/FreeCAD CAM 101 - Intro to CAM/Lesson 2": lesson2_dir,
+    "Classes/FreeCAD CAM 101 - Intro to CAM/Lesson 3": lesson3_dir,
 }
 
 manifest_path = os.path.join(freecad_dir, ".nibbler_manifest.json")
@@ -149,25 +158,18 @@ def sync_group(source_path, target_path, group_name, file_filter=None):
     manifest[group_name] = list(source_files)
     save_manifest(manifest)
 
-# Sync tool directories
-for subdir, destination in list(source_subdirs.items())[:3]:
+
+# Sync tool, class, and job directories
+for subdir, destination in source_subdirs.items():
     source_path = os.path.join(source_dir, subdir)
     if os.path.exists(source_path):
-        sync_group(source_path, destination, subdir)
+        if subdir == "jobs":
+            def job_file_filter(filename):
+                return filename.startswith("job_") and filename.endswith(".json")
+            sync_group(source_path, destination, subdir, file_filter=job_file_filter)
+        else:
+            sync_group(source_path, destination, subdir)
     else:
         print(f"Source directory not found: {source_path}. Skipping.")
-
-# Sync PostProcessor directory
-post_processor_source = os.path.join(source_dir, "PostProcessor")
-if os.path.exists(post_processor_source):
-    sync_group(post_processor_source, source_subdirs["PostProcessor"], "PostProcessor")
-else:
-    print(f"PostProcessor directory not found: {post_processor_source}. Skipping.")
-
-# Sync job_*.json files in root
-def job_file_filter(filename):
-    return filename.startswith("job_") and filename.endswith(".json")
-
-sync_group(source_dir, source_subdirs["jobs"], "jobs", file_filter=job_file_filter)
 
 print("Installation complete!")
