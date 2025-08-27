@@ -244,36 +244,6 @@ def export(objectslist, filename, argstring):
     if app is None:
         app = QtWidgets.QApplication([])
 
-    options_dialog = DustCollectionOptionsDialog()
-    if options_dialog.exec_():
-        dust_on, dust_off = options_dialog.get_options()
-    else:
-        print("User cancelled dust collection options dialog.")
-        return None
-
-    # Add M208 at end of PREAMBLE if dust_on is checked and not already present
-    if dust_on and "M208" not in PREAMBLE:
-        PREAMBLE = PREAMBLE.rstrip() + "\nM208\n"
-
-    # Add M209 before M300 in POSTAMBLE if dust_off is checked and not already present
-    if dust_off and "M209" not in POSTAMBLE:
-        if "M300" in POSTAMBLE:
-            POSTAMBLE = POSTAMBLE.replace("M300", "M209\nM300")
-
-    if not processArguments(argstring):
-        return None
-
-    tool_list = set()
-
-    for obj in objectslist:
-        if not hasattr(obj, "Path"):
-            print(
-                "the object "
-                + obj.Name
-                + " is not a path. Please select only path and Compounds."
-            )
-            return None
-
     missing_feed_speeds = []
     for obj in objectslist:
         if hasattr(obj, "Tool"):
@@ -323,6 +293,36 @@ def export(objectslist, filename, argstring):
 
         dialog.exec_()
         return None
+
+    options_dialog = DustCollectionOptionsDialog()
+    if options_dialog.exec_():
+        dust_on, dust_off = options_dialog.get_options()
+    else:
+        print("User cancelled dust collection options dialog.")
+        return None
+
+    # Add M208 at end of PREAMBLE if dust_on is checked and not already present
+    if dust_on and "M208" not in PREAMBLE:
+        PREAMBLE = PREAMBLE.rstrip() + "\nM208\n"
+
+    # Add M209 before M300 in POSTAMBLE if dust_off is checked and not already present
+    if dust_off and "M209" not in POSTAMBLE:
+        if "M300" in POSTAMBLE:
+            POSTAMBLE = POSTAMBLE.replace("M300", "M209\nM300")
+
+    if not processArguments(argstring):
+        return None
+
+    tool_list = set()
+
+    for obj in objectslist:
+        if not hasattr(obj, "Path"):
+            print(
+                "the object "
+                + obj.Name
+                + " is not a path. Please select only path and Compounds."
+            )
+            return None
 
     print("postprocessing...")
     gcode = ""
@@ -1196,11 +1196,15 @@ class DustCollectionOptionsDialog(QtWidgets.QDialog):
         self.setWindowTitle("Dust Collection Options")
         self.setLayout(QtWidgets.QVBoxLayout())
 
-        self.start_checkbox = QtWidgets.QCheckBox("Turn Dust Collection ON at Start (M208)")
+        self.start_checkbox = QtWidgets.QCheckBox(
+            "Turn Dust Collection ON at Start (M208)"
+        )
         self.start_checkbox.setChecked(True)
         self.layout().addWidget(self.start_checkbox)
 
-        self.end_checkbox = QtWidgets.QCheckBox("Turn Dust Collection OFF at End (M209)")
+        self.end_checkbox = QtWidgets.QCheckBox(
+            "Turn Dust Collection OFF at End (M209)"
+        )
         self.end_checkbox.setChecked(False)
         self.layout().addWidget(self.end_checkbox)
 
