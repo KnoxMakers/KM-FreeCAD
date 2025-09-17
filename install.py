@@ -163,7 +163,7 @@ def sync_group(source_path, target_path, group_name, file_filter=None):
 for subdir, destination in source_subdirs.items():
     source_path = os.path.join(source_dir, subdir)
     if os.path.exists(source_path):
-        if subdir == "jobs":
+        if subdir == "Jobs":
             def job_file_filter(filename):
                 return filename.startswith("job_") and filename.endswith(".json")
             sync_group(source_path, destination, subdir, file_filter=job_file_filter)

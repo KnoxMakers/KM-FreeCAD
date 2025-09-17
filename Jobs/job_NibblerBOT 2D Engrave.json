@@ -13,6 +13,11 @@
     "ClearanceHeightOffset": "7.0000 in",
     "FinalDepthExpression": "OpFinalDepth",
     "HorizRapid": "1000.0000 in/min",
+    "Pocket Shape": {
+      "OffsetPattern": "Offset",
+      "StepOver": "50",
+      "ZigZagAngle": "0.0"
+    },
     "Profile": {
       "HandleMultipleFeatures": "Individually"
     },
