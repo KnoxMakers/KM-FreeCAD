@@ -114,7 +114,7 @@ source_subdirs = {
     "Tools/Library": tool_lib_dir,
     "Tools/Shape": tool_shape_dir,
     "PostProcessor": os.path.join(FreeCAD.getUserAppDataDir(), "Macro"),
-    "jobs": freecad_dir,
+    "Jobs": freecad_dir,
     "Classes/FreeCAD CAM 101 - Intro to CAM/Lesson 1": lesson1_dir,
     "Classes/FreeCAD CAM 101 - Intro to CAM/Lesson 2": lesson2_dir,
     "Classes/FreeCAD CAM 101 - Intro to CAM/Lesson 3": lesson3_dir,
