@@ -1,17 +1,17 @@
 {
   "version": 2,
-  "name": "1/4\" O Flut Carbide Upcut NARCO 1.000 loc 2.500 oal",
+  "name": "1/4\" 3 Flute Roughing Upcut ZrCN 1.500 loc 3.000 oal",
   "shape": "endmill.fcstd",
   "parameter": {
     "Diameter": "0.2500 in",
-    "Length": "2.5000 in",
-    "CuttingEdgeHeight": "1.0000 in",
+    "Length": "3.0000 in",
+    "CuttingEdgeHeight": "1.5000 in",
     "ShankDiameter": "0.2500 in",
-    "Stickout": "1.2500 in"
+    "Stickout": "1.8750 in"
   },
   "attribute": {
-    "Chipload": "0.0000 in",
-    "Flutes": 1,
+    "Chipload": "0.0014 in",
+    "Flutes": 3,
     "Material": "Carbide",
     "SpindleDirection": "Forward"
   }
