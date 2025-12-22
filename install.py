@@ -12,11 +12,23 @@ if not os.path.exists(freecad_dir):
     os.makedirs(freecad_dir)
     print(f"Created FreeCAD directory at: {freecad_dir}")
 
+# Check FreeCAD version
+version = FreeCAD.Version()
+major = int(version[0])
+minor = int(version[1])
+if major < 1 or (major == 1 and minor < 1):
+    freecad_assets_dir = freecad_dir
+else:
+    freecad_assets_dir = os.path.join(freecad_dir, "CAMAssets")
+    if not os.path.exists(freecad_assets_dir):
+        os.makedirs(freecad_assets_dir)
+        print(f"Created FreeCAD CAMAssets directory at: {freecad_assets_dir}")
+
 # Define default paths
-tool_bit_dir = os.path.join(freecad_dir, "Tools", "Bit")
-tool_lib_dir = os.path.join(freecad_dir, "Tools", "Library")
-tool_shape_dir = os.path.join(freecad_dir, "Tools", "Shape")
-tools_root_dir = os.path.join(freecad_dir, "Tools")  # Root of Tools directory
+tool_bit_dir = os.path.join(freecad_assets_dir, "Tools", "Bit")
+tool_lib_dir = os.path.join(freecad_assets_dir, "Tools", "Library")
+tool_shape_dir = os.path.join(freecad_assets_dir, "Tools", "Shape")
+tools_root_dir = os.path.join(freecad_assets_dir, "Tools")  # Root of Tools directory
 default_tool_lib_file = os.path.join(tool_lib_dir, "NibblerBOT.fctl")
 gcode_dir = os.path.join(freecad_dir, "Gcode")  # Gcode directory
 camcheck_dir = os.path.join(freecad_dir, "CAMCheck")  # CamCheck directory
