@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "1/2\" Point Roundover Bit 0.500 loc 2.000 oal",
+  "name": "1/2\" Point Roundover, 1/4\" R 0.500 loc 2.000 oal",
   "shape": "roundover.fcstd",
   "parameter": {
     "Diameter": "0.5000 in",

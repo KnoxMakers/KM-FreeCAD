@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "3/4\" Point Roundover Bit 0.625 loc 2.250 oal",
+  "name": "3/4\" Point Roundover, 3/8\" R 0.625 loc 2.250 oal",
   "shape": "roundover.fcstd",
   "parameter": {
     "Diameter": "0.7500 in",
