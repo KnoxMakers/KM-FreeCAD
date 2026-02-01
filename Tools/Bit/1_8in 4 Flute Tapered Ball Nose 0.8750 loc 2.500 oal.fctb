@@ -1,20 +1,20 @@
 {
-  "version": 2,
-  "name": "1/8\" 4 Flute Tapered Ball Nose 0.8750 loc 2.500 oal",
-  "shape": "taperedballnose.fcstd",
-  "parameter": {
-    "Diameter": "0.1250 in",
-    "Length": "2.5000 in",
-    "CuttingEdgeHeight": "0.8750 in",
-    "TaperDiameter": "0.2500 in",
-    "ShankDiameter": "0.2500 in",
-    "TaperAngle": "11.0000 °",
-    "Stickout": "1.5000 in"
-  },
   "attribute": {
     "Chipload": "0.0040 in",
     "Flutes": 4,
     "Material": "Carbide",
     "SpindleDirection": "Forward"
-  }
+  },
+  "name": "1/8\" 4 Flute Tapered Ball Nose 0.8750 loc 2.500 oal",
+  "parameter": {
+    "CuttingEdgeHeight": "0.8750 in",
+    "Diameter": "0.1250 in",
+    "Length": "2.5000 in",
+    "ShankDiameter": "0.2500 in",
+    "Stickout": "1.5000 in",
+    "TaperAngle": "11.0000\u00b0",
+    "TaperDiameter": "0.2500 in"
+  },
+  "shape": "taperedballnose.fcstd",
+  "version": 2
 }

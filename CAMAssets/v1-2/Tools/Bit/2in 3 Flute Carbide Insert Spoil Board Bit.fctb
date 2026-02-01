@@ -4,7 +4,7 @@
   "name": "2\" 3 Flute Carbide Insert Spoil Board Bit",
   "parameter": {
     "Chipload": "0.0000 in",
-    "CuttingEdgeHeight": "0.4724 in",
+    "CuttingEdgeHeight": "12mm",
     "Diameter": "2.0000 in",
     "Flutes": 3,
     "Length": "2.8000 in",

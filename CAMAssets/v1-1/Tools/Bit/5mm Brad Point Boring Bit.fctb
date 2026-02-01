@@ -4,9 +4,9 @@
   "name": "5mm Brad Point Boring Bit",
   "parameter": {
     "Chipload": "0.0000 in",
-    "Diameter": "0.1969 in",
+    "Diameter": "5.000 mm",
     "Flutes": 2,
-    "Length": "2.2441 in",
+    "Length": "57.000 mm",
     "Material": "Carbide",
     "SpindleDirection": "Forward",
     "Stickout": "1.2500 in",

@@ -13,7 +13,7 @@
     "ShankDiameter": "0.5000 in",
     "SpindleDirection": "Forward",
     "Stickout": "1.1250 in",
-    "TipDiameter": "0.0000 in"
+    "TipDiameter": "0.0020 in"
   },
   "shape": "radius.fcstd",
   "shape-type": "Radius",
