@@ -1,0 +1,22 @@
+{
+  "attribute": {},
+  "id": "1-1_2in 150 V-Groove Bit 0.2000 loc 1.800 oal",
+  "name": "1-1/2\" 150 V-Groove Bit 0.2000 loc 1.800 oal",
+  "parameter": {
+    "Chipload": "0.0018 in",
+    "CuttingEdgeAngle": "150.0000\u00b0",
+    "CuttingEdgeHeight": "0.2000 in",
+    "Diameter": "1.5000 in",
+    "Flutes": 2,
+    "Length": "1.8000 in",
+    "Material": "Carbide",
+    "ShankDiameter": "0.2500 in",
+    "SpindleDirection": "Forward",
+    "Stickout": "0.8750 in",
+    "TipDiameter": "0.0000 in",
+    "Units": "Imperial"
+  },
+  "shape": "v-bit.fcstd",
+  "shape-type": "VBit",
+  "version": 2
+}

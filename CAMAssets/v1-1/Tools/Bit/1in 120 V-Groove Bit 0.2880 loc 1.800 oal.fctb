@@ -1,0 +1,21 @@
+{
+  "attribute": {},
+  "id": "1in 120 V-Groove Bit 0.2880 loc 1.800 oal",
+  "name": "1\" 120 V-Groove Bit 0.2880 loc 1.800 oal",
+  "parameter": {
+    "Chipload": "0.0024 in",
+    "CuttingEdgeAngle": "120.0000\u00b0",
+    "CuttingEdgeHeight": "0.2880 in",
+    "Diameter": "1.0000 in",
+    "Flutes": 2,
+    "Length": "1.8000 in",
+    "Material": "Carbide",
+    "ShankDiameter": "0.2500 in",
+    "SpindleDirection": "Forward",
+    "Stickout": "0.9450 in",
+    "TipDiameter": "0.0000 in"
+  },
+  "shape": "v-bit.fcstd",
+  "shape-type": "VBit",
+  "version": 2
+}

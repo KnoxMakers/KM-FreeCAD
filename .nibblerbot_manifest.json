@@ -1,5 +1,8 @@
 {
   "Tools/Bit": [
+    "1-1_2in 150 V-Groove Bit 0.2000 loc 1.800 oal.fctb",
+    "1in Bowl & Tray Bit 0.750 loc 2.000 oal.fctb",
+    "1in 120 V-Groove Bit 0.2880 loc 1.800 oal.fctb",
     "1_8in Carbide Drill bit.fctb",
     "1_4in Point Roundover, 1_8in R 0.300 loc 1.900 oal.fctb",
     "2in 4 Flute Carbide Spoil Board Bit.fctb",
@@ -8,6 +11,7 @@
     "1_2in Point Roundover, 1_4in R 0.500 loc 2.000 oal.fctb",
     "1_4in 2 Flute Spiral Down Cut 1.000 loc 2.500 oal.fctb",
     "3_16in 2 Flute Spiral Down Cut 0.7500 loc 2.5000 oal.fctb",
+    ".090in 2 Flute Tapered Ball Nose 0.7500 loc 2.200 oal.fctb",
     "3_16in 2 Flute Spiral Upcut 0.7500 loc 2.5000 oal.fctb",
     "1-1_4in Bowl & Tray Bit 0.500 loc 2.250 oal.fctb",
     "1_4in 2 Flute Upcut End Mill 0.7500 loc 2.500 oal.fctb",
@@ -27,7 +31,8 @@
     "1_2in 2FL Spiral Down Cut TAC 1.250 loc 3.000 oal.fctb",
     "1_2in 2FL COMP End Mill TAC 1.250 loc 3.000 oal.fctb",
     "1_4in 60 V-Groove Bit 0.2160 loc 2.000 oal.fctb",
-    "1_4in 2 Flute Ball Nose Downcut 1.000 loc 2.500 oal.fctb"
+    "1_4in 2 Flute Ball Nose Downcut 1.000 loc 2.500 oal.fctb",
+    ".030in 2 Flute Tapered Ball Nose 0.7500 loc 2.200 oal.fctb"
   ],
   "Tools/Library": [
     "NibblerBOT.fctl"
@@ -46,6 +51,9 @@
     "torus.fcstd"
   ],
   "CAMAssets/v1-1/Tools/Bit": [
+    "1-1_2in 150 V-Groove Bit 0.2000 loc 1.800 oal.fctb",
+    "1in Bowl & Tray Bit 0.750 loc 2.000 oal.fctb",
+    "1in 120 V-Groove Bit 0.2880 loc 1.800 oal.fctb",
     "1_8in Carbide Drill bit.fctb",
     "1_4in Point Roundover, 1_8in R 0.300 loc 1.900 oal.fctb",
     "2in 4 Flute Carbide Spoil Board Bit.fctb",
@@ -54,6 +62,7 @@
     "1_2in Point Roundover, 1_4in R 0.500 loc 2.000 oal.fctb",
     "1_4in 2 Flute Spiral Down Cut 1.000 loc 2.500 oal.fctb",
     "3_16in 2 Flute Spiral Down Cut 0.7500 loc 2.5000 oal.fctb",
+    ".090in 2 Flute Tapered Ball Nose 0.7500 loc 2.200 oal.fctb",
     "3_16in 2 Flute Spiral Upcut 0.7500 loc 2.5000 oal.fctb",
     "1-1_4in Bowl & Tray Bit 0.500 loc 2.250 oal.fctb",
     "1_4in 2 Flute Upcut End Mill 0.7500 loc 2.500 oal.fctb",
@@ -73,12 +82,16 @@
     "1_2in 2FL Spiral Down Cut TAC 1.250 loc 3.000 oal.fctb",
     "1_2in 2FL COMP End Mill TAC 1.250 loc 3.000 oal.fctb",
     "1_4in 60 V-Groove Bit 0.2160 loc 2.000 oal.fctb",
-    "1_4in 2 Flute Ball Nose Downcut 1.000 loc 2.500 oal.fctb"
+    "1_4in 2 Flute Ball Nose Downcut 1.000 loc 2.500 oal.fctb",
+    ".030in 2 Flute Tapered Ball Nose 0.7500 loc 2.200 oal.fctb"
   ],
   "CAMAssets/v1-1/Tools/Library": [
     "NibblerBOT.fctl"
   ],
   "CAMAssets/v1-2/Tools/Bit": [
+    "1-1_2in 150 V-Groove Bit 0.2000 loc 1.800 oal.fctb",
+    "1in Bowl & Tray Bit 0.750 loc 2.000 oal.fctb",
+    "1in 120 V-Groove Bit 0.2880 loc 1.800 oal.fctb",
     "1_8in Carbide Drill bit.fctb",
     "1_4in Point Roundover, 1_8in R 0.300 loc 1.900 oal.fctb",
     "2in 4 Flute Carbide Spoil Board Bit.fctb",
@@ -87,6 +100,7 @@
     "1_2in Point Roundover, 1_4in R 0.500 loc 2.000 oal.fctb",
     "1_4in 2 Flute Spiral Down Cut 1.000 loc 2.500 oal.fctb",
     "3_16in 2 Flute Spiral Down Cut 0.7500 loc 2.5000 oal.fctb",
+    ".090in 2 Flute Tapered Ball Nose 0.7500 loc 2.200 oal.fctb",
     "3_16in 2 Flute Spiral Upcut 0.7500 loc 2.5000 oal.fctb",
     "1-1_4in Bowl & Tray Bit 0.500 loc 2.250 oal.fctb",
     "1_4in 2 Flute Upcut End Mill 0.7500 loc 2.500 oal.fctb",
@@ -106,7 +120,8 @@
     "1_2in 2FL Spiral Down Cut TAC 1.250 loc 3.000 oal.fctb",
     "1_2in 2FL COMP End Mill TAC 1.250 loc 3.000 oal.fctb",
     "1_4in 60 V-Groove Bit 0.2160 loc 2.000 oal.fctb",
-    "1_4in 2 Flute Ball Nose Downcut 1.000 loc 2.500 oal.fctb"
+    "1_4in 2 Flute Ball Nose Downcut 1.000 loc 2.500 oal.fctb",
+    ".030in 2 Flute Tapered Ball Nose 0.7500 loc 2.200 oal.fctb"
   ],
   "CAMAssets/v1-2/Tools/Library": [
     "NibblerBOT.fctl"

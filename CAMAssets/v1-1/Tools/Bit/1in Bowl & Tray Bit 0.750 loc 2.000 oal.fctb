@@ -1,0 +1,20 @@
+{
+  "attribute": {},
+  "id": "1in Bowl & Tray Bit 0.750 loc 2.000 oal",
+  "name": "1\" Bowl & Tray Bit 0.750 loc 2.000 oal",
+  "parameter": {
+    "Chipload": "0.0029 in",
+    "CornerRadius": "0.3750 in",
+    "CuttingEdgeHeight": "0.7500 in",
+    "Diameter": "1.0000 in",
+    "Flutes": 2,
+    "Length": "2.0000 in",
+    "Material": "Carbide",
+    "ShankDiameter": "0.2500 in",
+    "SpindleDirection": "Forward",
+    "Stickout": "1.0000 in"
+  },
+  "shape": "bullnose.fcstd",
+  "shape-type": "Bullnose",
+  "version": 2
+}

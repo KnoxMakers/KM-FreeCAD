@@ -1,0 +1,22 @@
+{
+  "attribute": {},
+  "id": ".090in 2 Flute Tapered Ball Nose 0.7500 loc 2.200 oal",
+  "name": ".090\" 2 Flute Tapered Ball Nose 0.7500 loc 2.200 oal",
+  "parameter": {
+    "Chipload": "0.0016 in",
+    "CuttingEdgeHeight": "0.7500 in",
+    "Diameter": "0.0900 in",
+    "Flutes": 2,
+    "Length": "2.2000 in",
+    "Material": "Carbide",
+    "ShankDiameter": "0.2500 in",
+    "SpindleDirection": "Forward",
+    "Stickout": "1.2500 in",
+    "TaperAngle": "10.0000\u00b0",
+    "TaperDiameter": "0.2500 in",
+    "Units": "Imperial"
+  },
+  "shape": "taperedballnose.fcstd",
+  "shape-type": "TaperedBallNose",
+  "version": 2
+}

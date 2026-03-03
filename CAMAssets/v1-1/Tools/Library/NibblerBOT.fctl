@@ -13,6 +13,14 @@
       "path": "1_4in 60 V-Groove Bit 0.2160 loc 2.000 oal.fctb"
     },
     {
+      "nr": 13,
+      "path": "1-1_2in 150 V-Groove Bit 0.2000 loc 1.800 oal.fctb"
+    },
+    {
+      "nr": 14,
+      "path": "1in 120 V-Groove Bit 0.2880 loc 1.800 oal.fctb"
+    },
+    {
       "nr": 20,
       "path": "3_16in 2 Flute Spiral Upcut 0.7500 loc 2.5000 oal.fctb"
     },
@@ -69,6 +77,14 @@
       "path": "1_8in 4 Flute Tapered Ball Nose 0.8750 loc 2.500 oal.fctb"
     },
     {
+      "nr": 53,
+      "path": ".090in 2 Flute Tapered Ball Nose 0.7500 loc 2.200 oal.fctb"
+    },
+    {
+      "nr": 54,
+      "path": ".030in 2 Flute Tapered Ball Nose 0.7500 loc 2.200 oal.fctb"
+    },
+    {
       "nr": 60,
       "path": "2in 4 Flute Carbide Spoil Board Bit.fctb"
     },
@@ -83,6 +99,10 @@
     {
       "nr": 71,
       "path": "3_4in Bowl & Tray Bit 0.625 loc 2.375 oal.fctb"
+    },
+    {
+      "nr": 72,
+      "path": "1in Bowl & Tray Bit 0.750 loc 2.000 oal.fctb"
     },
     {
       "nr": 80,
