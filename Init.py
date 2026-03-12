@@ -54,9 +54,7 @@ def get_metadata(addon_dir=addon_dir):
 addon_name, repo_url, branch = get_metadata(addon_dir)
 
 # Allow branch override via preferences (useful for tracking dev/testing branches)
-prefs = FreeCAD.ParamGet(
-    "User parameter:BaseApp/Preferences/Mod/KnoxMakersFreeCADManager"
-)
+prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/KnoxMakersFreeCADManager")
 branch_override = prefs.GetString("BranchOverride", "")
 if branch_override:
     FreeCAD.Console.PrintMessage(f"– Using branch override: {branch_override}\n")
@@ -67,9 +65,7 @@ def check_latest_commit(addon_name=addon_name, repo_url=repo_url, branch=branch)
     """Check for the latest commit hash from GitHub API."""
 
     if not repo_url:
-        FreeCAD.Console.PrintWarning(
-            "– Could not determine repository URL from package.xml\n"
-        )
+        FreeCAD.Console.PrintWarning("– Could not determine repository URL from package.xml\n")
         return "unknown"
 
     FreeCAD.Console.PrintMessage(f"– Repository: {repo_url} (branch: {branch})\n")
@@ -110,9 +106,7 @@ def check_latest_commit(addon_name=addon_name, repo_url=repo_url, branch=branch)
 current_hash = check_latest_commit(addon_dir)
 
 # load stored hash from prefs
-prefs = FreeCAD.ParamGet(
-    "User parameter:BaseApp/Preferences/Mod/KnoxMakersFreeCADManager"
-)
+prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/KnoxMakersFreeCADManager")
 last_hash = prefs.GetString("LastInstalledHash", "")
 FreeCAD.Console.PrintMessage(f"– Last installed: {last_hash}\n")
 
@@ -125,16 +119,23 @@ current_version = f"v{major}-{minor}"
 # check installed version history
 installed_versions = prefs.GetString("InstalledVersions", "")
 FreeCAD.Console.PrintMessage(f"– FreeCAD version: {current_version}\n")
-FreeCAD.Console.PrintMessage(
-    f"– Installed for versions: {installed_versions or 'none'}\n"
-)
+FreeCAD.Console.PrintMessage(f"– Installed for versions: {installed_versions or 'none'}\n")
 
 # parse version list and check if current version has been installed
 version_list = [v.strip() for v in installed_versions.split(",") if v.strip()]
 version_already_installed = current_version in version_list
 
-# run installer if hash changed OR version not yet installed
-needs_install = last_hash != current_hash or not version_already_installed
+# Check if migration was detected (path changed due to versioned directory migration)
+migration_detected = prefs.GetBool("MigrationDetected", False)
+if migration_detected:
+    FreeCAD.Console.PrintMessage("– Migration detected, forcing reinstall\n")
+    prefs.SetBool("MigrationDetected", False)  # Clear the flag
+
+# run installer if:
+# - hash changed (new addon version), OR
+# - version not yet installed (FreeCAD upgraded), OR
+# - migration was detected (directory structure changed)
+needs_install = last_hash != current_hash or not version_already_installed or migration_detected
 
 if needs_install:
     try:
@@ -158,9 +159,7 @@ if needs_install:
                 """Return the GitHub zip download URL for this addon."""
                 # Handle both https://github.com/owner/repo and git@github.com:owner/repo formats
                 if 'github.com' in self.url:
-                    clean_url = self.url.replace(
-                        'git@github.com:', 'https://github.com/'
-                    )
+                    clean_url = self.url.replace('git@github.com:', 'https://github.com/')
                     if clean_url.endswith('.git'):
                         clean_url = clean_url[:-4]
                     return f"{clean_url}/archive/refs/heads/{self.branch}.zip"
@@ -211,14 +210,10 @@ if needs_install:
             os._exit(0)
 
         except Exception as e:
-            FreeCAD.Console.PrintError(
-                f"✗ Knox Makers FreeCAD Manager restart error: {str(e)}\n"
-            )
+            FreeCAD.Console.PrintError(f"✗ Knox Makers FreeCAD Manager restart error: {str(e)}\n")
 
     except Exception as e:
-        FreeCAD.Console.PrintError(
-            f"✗ Knox Makers FreeCAD Manager install error: {e}\n"
-        )
+        FreeCAD.Console.PrintError(f"✗ Knox Makers FreeCAD Manager install error: {e}\n")
 else:
     FreeCAD.Console.PrintMessage(
         f"✓ Knox Makers FreeCAD Manager: Already installed ({current_hash} for {current_version})\n"

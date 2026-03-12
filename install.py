@@ -2,15 +2,11 @@ import FreeCAD, os, shutil, json
 
 # Get FreeCAD preferences
 prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/CAM")
+addon_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/KnoxMakersFreeCADManager")
 
 # Get user's home directory
 home_dir = os.path.expanduser("~")
 freecad_dir = os.path.join(home_dir, "Documents", "FreeCAD")
-
-# Ensure FreeCAD directory exists
-if not os.path.exists(freecad_dir):
-    os.makedirs(freecad_dir)
-    print(f"Created FreeCAD directory at: {freecad_dir}")
 
 # Check FreeCAD version
 version = FreeCAD.Version()
@@ -18,20 +14,75 @@ major = int(version[0])
 minor = int(version[1])
 version_string = f"v{major}-{minor}"  # e.g., v1-1, v1-2
 
+# Detect CAM+ custom build - uses v1.2 toolbit files even on v1.1
+# CAM+ builds set PACKAGE_VERSION_SUFFIX="cam+" in CMakeLists.txt
+is_cam_plus_build = False
+source_version_override = None
+try:
+    # Check BuildVersionSuffix from Config (set via CMake PACKAGE_VERSION_SUFFIX)
+    # This works for both local builds and AppImage builds
+    build_suffix = FreeCAD.ConfigGet("BuildVersionSuffix")
+    if "cam+" in build_suffix.lower():
+        is_cam_plus_build = True
+        print(f"✓ Detected CAM+ custom build (suffix: {build_suffix})")
+        # CAM+ v1.1 uses v1.2 toolbit files
+        if major == 1 and minor == 1:
+            source_version_override = "v1-2"
+            print(f"  → Using v1-2 toolbit files for CAM+ v1.1")
+    else:
+        print(f"Detected FreeCAD {version_string} (suffix: {build_suffix if build_suffix else 'none'})")
+except Exception as e:
+    print(f"Warning: Version detection error: {e}")
+    print(f"Assuming standard FreeCAD {version_string}")
+
 # Determine the correct directory structure based on version
 if major < 1 or (major == 1 and minor < 1):
-    # FreeCAD 1.0.x - use legacy structure
+    # FreeCAD 1.0.x - use legacy structure without CAMAssets
     freecad_assets_dir = freecad_dir
     source_tools_base = "Tools"  # Source from Tools/ in repo
 else:
-    # FreeCAD 1.1+ - use versioned CAMAssets structure
-    freecad_assets_dir = os.path.join(freecad_dir, "CAMAssets", version_string)
+    # FreeCAD 1.1+ - Use FreeCAD's built-in directory resolution
+    # This automatically handles versioned vs non-versioned directories
+    base_camassets = os.path.join(freecad_dir, "CAMAssets")
+
+    # Use mostRecentConfigFromBase to get the actual directory (versioned or not)
+    try:
+        freecad_assets_dir = FreeCAD.ApplicationDirectories.mostRecentConfigFromBase(base_camassets)
+        print(f"Using CAMAssets directory: {freecad_assets_dir}")
+    except:
+        # Fallback if mostRecentConfigFromBase not available or fails
+        freecad_assets_dir = base_camassets
+        print(f"Using base CAMAssets directory: {freecad_assets_dir}")
+
+    # Create the directory if it doesn't exist
     if not os.path.exists(freecad_assets_dir):
         os.makedirs(freecad_assets_dir)
-        print(f"Created FreeCAD CAMAssets directory at: {freecad_assets_dir}")
-    source_tools_base = os.path.join(
-        "CAMAssets", version_string, "Tools"
-    )  # Source from CAMAssets/v1-x/Tools/ in repo
+        print(f"Created CAMAssets directory at: {freecad_assets_dir}")
+
+    # Determine source directory based on whether we're in versioned structure
+    # For CAM+ builds, override the source version
+    source_ver = source_version_override if source_version_override else version_string
+
+    if freecad_assets_dir.endswith(version_string):
+        # Using versioned structure - source from versioned addon directory
+        source_tools_base = os.path.join("CAMAssets", source_ver, "Tools")
+        if source_version_override:
+            print(f"Using source files from: {source_tools_base}")
+    else:
+        # Using non-versioned structure - source from base tools
+        source_tools_base = "Tools"
+
+# Track the actual install path - if it changes (due to migration), we need to reinstall
+last_install_path = addon_prefs.GetString("LastInstallPath", "")
+path_changed = last_install_path and last_install_path != freecad_assets_dir
+if path_changed:
+    print(f"CAMAssets path changed from {last_install_path} to {freecad_assets_dir}")
+    print(f"Migration detected - will force reinstall of files")
+    # Set a flag that Init.py can check
+    addon_prefs.SetBool("MigrationDetected", True)
+
+# Update the last install path
+addon_prefs.SetString("LastInstallPath", freecad_assets_dir)
 
 # Define default paths
 tool_bit_dir = os.path.join(freecad_assets_dir, "Tools", "Bit")
@@ -89,10 +140,12 @@ if not prefs.GetString("LastFileToolLibrary"):
 if major >= 1 and minor >= 1:
     tools_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/CAM/Tools")
 
-    camassets_root = os.path.join(freecad_dir, "CAMAssets")
+    # Set the BASE path (non-versioned) - FreeCAD will automatically resolve via mostRecentConfigFromBase
+    camassets_base = os.path.join(freecad_dir, "CAMAssets")
     if not tools_prefs.GetString("ToolPath"):
-        tools_prefs.SetString("ToolPath", camassets_root)
-        print(f"Set ToolPath to: {camassets_root}")
+        tools_prefs.SetString("ToolPath", camassets_base)
+        print(f"Set ToolPath (base) to: {camassets_base}")
+        print(f"  → Resolves to: {freecad_assets_dir}")
 
     if not tools_prefs.GetString("LastToolLibrary"):
         tools_prefs.SetString("LastToolLibrary", "toolbitlibrary://NibblerBOT")
@@ -102,11 +155,10 @@ if major >= 1 and minor >= 1:
         tools_prefs.SetString("LastToolLibrarySortKey", "tool_no")
         print(f"Set LastToolLibrarySortKey to: tool_no")
 
-    # Prevent FreeCAD from offering to migrate CAMAssets
-    migration_prefs = FreeCAD.ParamGet(
-        "User parameter:BaseApp/Preferences/Mod/CAM/Migration"
-    )
-    offered_versions = migration_prefs.GetString("OfferedToMigrateCAMAssets")
+    # Prevent FreeCAD's CAM workbench from offering to migrate CAMAssets
+    # We handle migration ourselves using mostRecentConfigFromBase
+    migration_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/CAM/Migration")
+    offered_versions = migration_prefs.GetString("OfferedToMigrateCAMAssets", "")
 
     if offered_versions:
         # Check if current version is already in the list
@@ -115,9 +167,7 @@ if major >= 1 and minor >= 1:
             version_list.append(version_string)
             new_versions = ",".join(version_list)
             migration_prefs.SetString("OfferedToMigrateCAMAssets", new_versions)
-            print(
-                f"Added {version_string} to OfferedToMigrateCAMAssets: {new_versions}"
-            )
+            print(f"Added {version_string} to OfferedToMigrateCAMAssets: {new_versions}")
     else:
         # First time setting it
         migration_prefs.SetString("OfferedToMigrateCAMAssets", version_string)
