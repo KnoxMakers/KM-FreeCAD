@@ -2,7 +2,9 @@ import FreeCAD, os, shutil, json
 
 # Get FreeCAD preferences
 prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/CAM")
-addon_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/KnoxMakersFreeCADManager")
+addon_prefs = FreeCAD.ParamGet(
+    "User parameter:BaseApp/Preferences/Mod/KnoxMakersFreeCADManager"
+)
 
 # Get user's home directory
 home_dir = os.path.expanduser("~")
@@ -30,7 +32,9 @@ try:
             source_version_override = "v1-2"
             print(f"  → Using v1-2 toolbit files for CAM+ v1.1")
     else:
-        print(f"Detected FreeCAD {version_string} (suffix: {build_suffix if build_suffix else 'none'})")
+        print(
+            f"Detected FreeCAD {version_string} (suffix: {build_suffix if build_suffix else 'none'})"
+        )
 except Exception as e:
     print(f"Warning: Version detection error: {e}")
     print(f"Assuming standard FreeCAD {version_string}")
@@ -47,7 +51,9 @@ else:
 
     # Use mostRecentConfigFromBase to get the actual directory (versioned or not)
     try:
-        freecad_assets_dir = FreeCAD.ApplicationDirectories.mostRecentConfigFromBase(base_camassets)
+        freecad_assets_dir = FreeCAD.ApplicationDirectories.mostRecentConfigFromBase(
+            base_camassets
+        )
         print(f"Using CAMAssets directory: {freecad_assets_dir}")
     except:
         # Fallback if mostRecentConfigFromBase not available or fails
@@ -157,7 +163,9 @@ if major >= 1 and minor >= 1:
 
     # Prevent FreeCAD's CAM workbench from offering to migrate CAMAssets
     # We handle migration ourselves using mostRecentConfigFromBase
-    migration_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/CAM/Migration")
+    migration_prefs = FreeCAD.ParamGet(
+        "User parameter:BaseApp/Preferences/Mod/CAM/Migration"
+    )
     offered_versions = migration_prefs.GetString("OfferedToMigrateCAMAssets", "")
 
     if offered_versions:
@@ -167,7 +175,9 @@ if major >= 1 and minor >= 1:
             version_list.append(version_string)
             new_versions = ",".join(version_list)
             migration_prefs.SetString("OfferedToMigrateCAMAssets", new_versions)
-            print(f"Added {version_string} to OfferedToMigrateCAMAssets: {new_versions}")
+            print(
+                f"Added {version_string} to OfferedToMigrateCAMAssets: {new_versions}"
+            )
     else:
         # First time setting it
         migration_prefs.SetString("OfferedToMigrateCAMAssets", version_string)
@@ -226,6 +236,21 @@ post_processor_default = "NibblerBOT"
 if not prefs.GetString("PostProcessorDefault"):
     prefs.SetString("PostProcessorDefault", post_processor_default)
     print(f"Set PostProcessorDefault to: {post_processor_default}")
+
+
+if (
+    not prefs.GetString("EnableAdvancedOCLFeatures")
+    or prefs.GetString("EnableAdvancedOCLFeatures") == "False"
+):
+    prefs.SetString("EnableAdvancedOCLFeatures", "True")
+    print(f"Set EnableAdvancedOCLFeatures to: True")
+
+if (
+    not prefs.GetString("EnableExperimentalFeatures")
+    or prefs.GetString("EnableExperimentalFeatures") == "False"
+):
+    prefs.SetString("EnableExperimentalFeatures", "True")
+    print(f"Set EnableExperimentalFeatures to: True")
 
 # Copy all files from source directories to target directories
 source_dir = os.path.dirname(__file__)  # Directory containing this script

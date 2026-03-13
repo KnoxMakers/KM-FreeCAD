@@ -8,7 +8,7 @@
   <date>2025.07.27</date>
   <maintainer email="billy@knoxmakers.org">Billy Huddleston</maintainer>
   <license file="LICENSE.txt">MIT</license>
-  <url type="repository" branch="dev">https://github.com/KnoxMakers/KM-FreeCAD</url>
+  <url type="repository" branch="main">https://github.com/KnoxMakers/KM-FreeCAD</url>
   <url type="bugtracker">https://github.com/KnoxMakers/KM-FreeCAD/issues</url>
   <icon>icons/KnoxMakers.svg</icon>
   <content>
