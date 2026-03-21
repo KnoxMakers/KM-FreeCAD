@@ -243,18 +243,12 @@ if not prefs.GetString("PostProcessorDefault"):
     print(f"Set PostProcessorDefault to: {post_processor_default}")
 
 
-if (
-    not prefs.GetString("EnableAdvancedOCLFeatures")
-    or prefs.GetString("EnableAdvancedOCLFeatures") == "False"
-):
-    prefs.SetString("EnableAdvancedOCLFeatures", "True")
+if not prefs.GetBool("EnableAdvancedOCLFeatures", False):
+    prefs.SetBool("EnableAdvancedOCLFeatures", True)
     print(f"Set EnableAdvancedOCLFeatures to: True")
 
-if (
-    not prefs.GetString("EnableExperimentalFeatures")
-    or prefs.GetString("EnableExperimentalFeatures") == "False"
-):
-    prefs.SetString("EnableExperimentalFeatures", "True")
+if not prefs.GetBool("EnableExperimentalFeatures", False):
+    prefs.SetBool("EnableExperimentalFeatures", True)
     print(f"Set EnableExperimentalFeatures to: True")
 
 # Copy all files from source directories to target directories

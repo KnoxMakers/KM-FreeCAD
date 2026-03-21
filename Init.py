@@ -137,37 +137,70 @@ if migration_detected:
 # - migration was detected (directory structure changed)
 needs_install = last_hash != current_hash or not version_already_installed or migration_detected
 
+def _self_update_zip(zip_url, target_dir):
+    """Download zip, pre-clean what we can, then overwrite in-place.
+
+    Pre-cleanup: walk target_dir and delete every file/subdir we can.
+    Files Python holds open (.pyc etc.) will fail silently and be overwritten
+    by the subsequent copytree call — which Windows does allow even on open files.
+    This removes stale files that are no longer in the new release.
+    """
+    import urllib.request
+    import tempfile
+    import zipfile
+    import shutil
+
+    # Pre-cleanup: delete everything we can before the overlay.
+    # Locked files (e.g. __pycache__/*.pyc) are skipped silently and overwritten
+    # by copytree below, which succeeds even when the file is open on Windows.
+    if os.path.isdir(target_dir):
+        FreeCAD.Console.PrintMessage(f"– Pre-cleaning addon directory...\n")
+        for root, dirs, files in os.walk(target_dir, topdown=False):
+            for name in files:
+                try:
+                    os.remove(os.path.join(root, name))
+                except OSError:
+                    pass  # locked — will be overwritten by copytree
+            for name in dirs:
+                try:
+                    os.rmdir(os.path.join(root, name))
+                except OSError:
+                    pass  # not empty (locked files still inside) — leave it
+
+    FreeCAD.Console.PrintMessage(f"– Downloading {zip_url}...\n")
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.zip') as f:
+        tmp = f.name
+    try:
+        urllib.request.urlretrieve(zip_url, tmp)
+        with tempfile.TemporaryDirectory() as td:
+            with zipfile.ZipFile(tmp, 'r') as zf:
+                zf.extractall(td)
+            # GitHub wraps content in a repo-branch/ subdirectory — unwrap it
+            entries = [e for e in os.listdir(td) if os.path.isdir(os.path.join(td, e))]
+            src = os.path.join(td, entries[0]) if len(entries) == 1 else td
+            shutil.copytree(src, target_dir, dirs_exist_ok=True)
+    finally:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+
+
 if needs_install:
     try:
-        # Update the addon from GitHub using AddonManager
+        # Update the addon from GitHub
         FreeCAD.Console.PrintMessage(f"– Updating addon from GitHub...\n")
 
-        # Ensure FreeCAD.GuiUp exists (may not exist in some FreeCAD versions/contexts)
-        if not hasattr(FreeCAD, 'GuiUp'):
-            FreeCAD.GuiUp = False
+        # Build the zip URL from package.xml metadata
+        if repo_url and 'github.com' in repo_url:
+            clean_url = repo_url.replace('git@github.com:', 'https://github.com/')
+            if clean_url.endswith('.git'):
+                clean_url = clean_url[:-4]
+            zip_url = f"{clean_url}/archive/refs/heads/{branch}.zip"
+        else:
+            zip_url = repo_url
 
-        from addonmanager_installer import AddonInstaller
-
-        # Create a simple Addon-like object for the installer
-        class AddonObject:
-            def __init__(self, name, url, branch):
-                self.name = name
-                self.url = url
-                self.branch = branch
-
-            def get_zip_url(self):
-                """Return the GitHub zip download URL for this addon."""
-                # Handle both https://github.com/owner/repo and git@github.com:owner/repo formats
-                if 'github.com' in self.url:
-                    clean_url = self.url.replace('git@github.com:', 'https://github.com/')
-                    if clean_url.endswith('.git'):
-                        clean_url = clean_url[:-4]
-                    return f"{clean_url}/archive/refs/heads/{self.branch}.zip"
-                return self.url
-
-        addon_obj = AddonObject(addon_name, repo_url, branch)
-        installer = AddonInstaller(addon_obj)
-        installer.run()
+        _self_update_zip(zip_url, addon_dir)
 
         FreeCAD.Console.PrintMessage(f"– Addon updated successfully\n")
 
