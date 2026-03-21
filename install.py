@@ -69,18 +69,23 @@ else:
     # For CAM+ builds, override the source version
     source_ver = source_version_override if source_version_override else version_string
 
-    if freecad_assets_dir.endswith(version_string):
+    if os.path.basename(os.path.normpath(freecad_assets_dir)) == version_string:
         # Using versioned structure - source from versioned addon directory
         source_tools_base = os.path.join("CAMAssets", source_ver, "Tools")
         if source_version_override:
             print(f"Using source files from: {source_tools_base}")
     else:
         # Using non-versioned structure - source from base tools
-        source_tools_base = "Tools"
+        # For CAM+ builds, still use the overridden versioned source
+        if source_version_override:
+            source_tools_base = os.path.join("CAMAssets", source_version_override, "Tools")
+            print(f"Using source files from: {source_tools_base}")
+        else:
+            source_tools_base = "Tools"
 
 # Track the actual install path - if it changes (due to migration), we need to reinstall
 last_install_path = addon_prefs.GetString("LastInstallPath", "")
-path_changed = last_install_path and last_install_path != freecad_assets_dir
+path_changed = last_install_path and os.path.normcase(last_install_path) != os.path.normcase(freecad_assets_dir)
 if path_changed:
     print(f"CAMAssets path changed from {last_install_path} to {freecad_assets_dir}")
     print(f"Migration detected - will force reinstall of files")
@@ -260,9 +265,9 @@ source_subdirs = {
     os.path.join(source_tools_base, "Shape"): tool_shape_dir,
     "PostProcessor": os.path.join(FreeCAD.getUserAppDataDir(), "Macro"),
     "Jobs": freecad_dir,
-    "Classes/FreeCAD CAM 101 - Intro to CAM/Lesson 1": lesson1_dir,
-    "Classes/FreeCAD CAM 101 - Intro to CAM/Lesson 2": lesson2_dir,
-    "Classes/FreeCAD CAM 101 - Intro to CAM/Lesson 3": lesson3_dir,
+    os.path.join("Classes", "FreeCAD CAM 101 - Intro to CAM", "Lesson 1"): lesson1_dir,
+    os.path.join("Classes", "FreeCAD CAM 101 - Intro to CAM", "Lesson 2"): lesson2_dir,
+    os.path.join("Classes", "FreeCAD CAM 101 - Intro to CAM", "Lesson 3"): lesson3_dir,
 }
 
 manifest_path = os.path.join(freecad_dir, ".nibbler_manifest.json")
