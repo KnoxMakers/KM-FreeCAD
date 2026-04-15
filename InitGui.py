@@ -6,7 +6,7 @@ Runs after the FreeCAD GUI is fully initialised, making it safe to show dialogs.
 
 Version comparison handles:
   v1.1rc3-cam+2  →  (1, 1, rc=3, build=2)
-  v1.1-cam+1     →  (1, 1, rc=None, build=1)   ← full release > any RC
+  v1.1.1cam+1    →  (1, 1, patch=1, rc=None, build=1)   ← full release > any RC
   v1.2rc1-cam+1  →  (1, 2, rc=1, build=1)
 
 Comparison order: major → minor → rc (None=release > int=rc) → build#
@@ -82,6 +82,7 @@ def check_for_freecad_update(
             ver = FreeCAD.Version()
             major = int(ver[0]) if ver[0].isdigit() else 0
             minor = int(ver[1]) if ver[1].isdigit() else 0
+            patch = int(ver[2]) if len(ver) > 2 and ver[2].isdigit() else 0
         except Exception:
             return None
         try:
@@ -99,10 +100,12 @@ def check_for_freecad_update(
             build_date = (int(parts[0]), int(parts[1]), int(parts[2]))
         except Exception:
             pass
-        rc_str = f"rc{rc}" if rc is not None else ""
         cam_build_match = re.search(r'cam\+(\d+)', suffix) or re.search(r'cam\+(\d+)', branch)
         cam_build = int(cam_build_match.group(1)) if cam_build_match else 0
-        approx_tag = f"v{major}.{minor}{rc_str}-cam+{cam_build}"
+        if rc is not None:
+            approx_tag = f"v{major}.{minor}rc{rc}-cam+{cam_build}"
+        else:
+            approx_tag = f"v{major}.{minor}.{patch}cam+{cam_build}"
         return {
             "major": major,
             "minor": minor,
