@@ -129,7 +129,6 @@ version_already_installed = current_version in version_list
 migration_detected = prefs.GetBool("MigrationDetected", False)
 if migration_detected:
     FreeCAD.Console.PrintMessage("– Migration detected, forcing reinstall\n")
-    prefs.SetBool("MigrationDetected", False)  # Clear the flag
 
 # run installer if:
 # - hash changed (new addon version), OR
@@ -206,6 +205,10 @@ if needs_install:
 
         # Now run the install to copy files to user directories
         import install
+
+        # Clear migration flag AFTER install runs, so any flag set by install.py
+        # during this run doesn't persist and cause a redundant reinstall on next start.
+        prefs.SetBool("MigrationDetected", False)
 
         prefs.SetString("LastInstalledHash", current_hash)
 

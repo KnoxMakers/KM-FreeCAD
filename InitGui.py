@@ -100,7 +100,9 @@ def check_for_freecad_update(
         except Exception:
             pass
         rc_str = f"rc{rc}" if rc is not None else ""
-        approx_tag = f"v{major}.{minor}{rc_str}-cam+0"
+        cam_build_match = re.search(r'cam\+(\d+)', suffix) or re.search(r'cam\+(\d+)', branch)
+        cam_build = int(cam_build_match.group(1)) if cam_build_match else 0
+        approx_tag = f"v{major}.{minor}{rc_str}-cam+{cam_build}"
         return {
             "major": major,
             "minor": minor,
@@ -130,9 +132,7 @@ def check_for_freecad_update(
 
     def show_update_dialog(info, latest_tag, release_url, prefs):
         try:
-            current_desc = (
-                info["approx_tag"].replace("-cam+0", "-cam+?") if info else "unknown"
-            )
+            current_desc = info["approx_tag"] if info else "unknown"
             msg = QtWidgets.QMessageBox()
             msg.setWindowTitle("New cam+ FreeCAD Build Available")
             msg.setIcon(QtWidgets.QMessageBox.Information)
