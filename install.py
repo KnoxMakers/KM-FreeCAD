@@ -153,7 +153,18 @@ if major >= 1 and minor >= 1:
 
     # Set the BASE path (non-versioned) - FreeCAD will automatically resolve via mostRecentConfigFromBase
     camassets_base = os.path.join(freecad_dir, "CAMAssets")
-    if not tools_prefs.GetString("ToolPath"):
+
+    # FreeCAD's out-of-the-box default is some variant of:
+    #   ~/.local/share/FreeCAD/.../CamAssets/...
+    # Regardless of any versioned sub-segments (e.g. v1-1), we can identify it
+    # by checking that the path contains ".local/share/FreeCAD" and "CamAssets".
+    _current_tool_path = tools_prefs.GetString("ToolPath")
+    _is_fc_default = bool(_current_tool_path) and (
+        ".local/share/FreeCAD" in _current_tool_path
+        and "CamAssets" in _current_tool_path
+    )
+
+    if not _current_tool_path or _is_fc_default:
         tools_prefs.SetString("ToolPath", camassets_base)
         print(f"Set ToolPath (base) to: {camassets_base}")
         print(f"  → Resolves to: {freecad_assets_dir}")
