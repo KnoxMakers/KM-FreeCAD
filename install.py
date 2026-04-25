@@ -334,4 +334,27 @@ for subdir, destination in source_subdirs.items():
     else:
         print(f"Source directory not found: {source_path}. Skipping.")
 
+# Configure Draft snap modes - enable specific snaps without touching others.
+# Snap index order (from gui_snapper.py):
+#   0:Lock, 1:Near, 2:Extension, 3:Parallel, 4:Grid,
+#   5:Endpoint, 6:Midpoint, 7:Perpendicular, 8:Angle, 9:Center,
+#   10:Ortho, 11:Intersection, 12:Special, 13:Dimensions, 14:WorkingPlane
+SNAP_MODES_LENGTH = 15
+REQUIRED_SNAPS_ON = {
+    0: "Lock (Snap Lock Global)",
+    5: "Endpoint",
+    6: "Midpoint",
+    9: "Center",
+    11: "Intersection",
+}
+draft_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Draft")
+current_modes = draft_prefs.GetString("snapModes", "1" + "0" * (SNAP_MODES_LENGTH - 1))
+# Pad or trim to the expected length in case the stored value is malformed
+modes_list = list(current_modes.ljust(SNAP_MODES_LENGTH, "0")[:SNAP_MODES_LENGTH])
+for idx, label in REQUIRED_SNAPS_ON.items():
+    if modes_list[idx] != "1":
+        modes_list[idx] = "1"
+        print(f"Draft snap: enabled {label} (index {idx})")
+draft_prefs.SetString("snapModes", "".join(modes_list))
+
 print("Installation complete!")
