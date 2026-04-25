@@ -26,11 +26,11 @@ try:
     build_suffix = FreeCAD.ConfigGet("BuildVersionSuffix")
     if "cam+" in build_suffix.lower():
         is_cam_plus_build = True
-        print(f"✓ Detected CAM+ custom build (suffix: {build_suffix})")
+        print(f"Detected CAM+ custom build (suffix: {build_suffix})")
         # CAM+ v1.1 uses v1.2 toolbit files
         if major == 1 and minor == 1:
             source_version_override = "v1-2"
-            print(f"  → Using v1-2 toolbit files for CAM+ v1.1")
+            print(f"  Using v1-2 toolbit files for CAM+ v1.1")
     else:
         print(
             f"Detected FreeCAD {version_string} (suffix: {build_suffix if build_suffix else 'none'})"
@@ -167,7 +167,7 @@ if major >= 1 and minor >= 1:
     if not _current_tool_path or _is_fc_default:
         tools_prefs.SetString("ToolPath", camassets_base)
         print(f"Set ToolPath (base) to: {camassets_base}")
-        print(f"  → Resolves to: {freecad_assets_dir}")
+        print(f"  Resolves to: {freecad_assets_dir}")
 
     if not tools_prefs.GetString("LastToolLibrary"):
         tools_prefs.SetString("LastToolLibrary", "toolbitlibrary://NibblerBOT")
