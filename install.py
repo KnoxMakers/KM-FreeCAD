@@ -104,10 +104,6 @@ default_tool_lib_file = os.path.join(tool_lib_dir, "NibblerBOT.fctl")
 gcode_dir = os.path.join(freecad_dir, "Gcode")  # Gcode directory
 camcheck_dir = os.path.join(freecad_dir, "CAMCheck")  # CamCheck directory
 classes_dir = os.path.join(freecad_dir, "Classes")
-course_dir = os.path.join(classes_dir, "FreeCAD CAM 101 - Intro to CAM")
-lesson1_dir = os.path.join(course_dir, "Lesson 1")
-lesson2_dir = os.path.join(course_dir, "Lesson 2")
-lesson3_dir = os.path.join(course_dir, "Lesson 3")
 
 # Ensure directories exist
 for path in [
@@ -117,10 +113,6 @@ for path in [
     gcode_dir,
     camcheck_dir,
     classes_dir,
-    course_dir,
-    lesson1_dir,
-    lesson2_dir,
-    lesson3_dir,
 ]:
     if not os.path.exists(path):
         os.makedirs(path)
@@ -264,16 +256,25 @@ if not prefs.GetBool("EnableExperimentalFeatures", False):
 
 # Copy all files from source directories to target directories
 source_dir = os.path.dirname(__file__)  # Directory containing this script
+def _norm_key(path):
+    """Normalize a manifest key to forward slashes for cross-platform consistency."""
+    return path.replace(os.sep, "/")
+
 source_subdirs = {
-    os.path.join(source_tools_base, "Bit"): tool_bit_dir,
-    os.path.join(source_tools_base, "Library"): tool_lib_dir,
-    os.path.join(source_tools_base, "Shape"): tool_shape_dir,
+    _norm_key(os.path.join(source_tools_base, "Bit")): tool_bit_dir,
+    _norm_key(os.path.join(source_tools_base, "Library")): tool_lib_dir,
+    _norm_key(os.path.join(source_tools_base, "Shape")): tool_shape_dir,
     "PostProcessor": os.path.join(FreeCAD.getUserAppDataDir(), "Macro"),
     "Jobs": freecad_dir,
-    os.path.join("Classes", "FreeCAD CAM 101 - Intro to CAM", "Lesson 1"): lesson1_dir,
-    os.path.join("Classes", "FreeCAD CAM 101 - Intro to CAM", "Lesson 2"): lesson2_dir,
-    os.path.join("Classes", "FreeCAD CAM 101 - Intro to CAM", "Lesson 3"): lesson3_dir,
 }
+
+# Dynamically discover all subdirectories under Classes/
+classes_source = os.path.join(source_dir, "Classes")
+if os.path.exists(classes_source):
+    for dirpath, dirnames, filenames in os.walk(classes_source):
+        rel = os.path.relpath(dirpath, source_dir)
+        rel_key = rel.replace(os.sep, "/")  # Normalize to forward slashes for cross-platform manifest keys
+        source_subdirs[rel_key] = os.path.join(freecad_dir, rel)
 
 manifest_path = os.path.join(freecad_dir, ".nibbler_manifest.json")
 
@@ -297,6 +298,7 @@ def sync_group(source_path, target_path, group_name, file_filter=None):
         f
         for f in os.listdir(source_path)
         if os.path.isfile(os.path.join(source_path, f))
+        and not f.endswith(".FCBak")
         and (file_filter(f) if file_filter else True)
     )
 
@@ -323,6 +325,7 @@ def sync_group(source_path, target_path, group_name, file_filter=None):
 for subdir, destination in source_subdirs.items():
     source_path = os.path.join(source_dir, subdir)
     if os.path.exists(source_path):
+        os.makedirs(destination, exist_ok=True)
         if subdir == "Jobs":
 
             def job_file_filter(filename):

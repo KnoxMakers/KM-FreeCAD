@@ -79,6 +79,13 @@
   "CAMAssets/v1-2/Tools/Shape": [
     "shape_aliases.json"
   ],
+  "Classes": [
+    "FreeCAD CAM 101 - Intro to CAM/Intro/face-mill-demo.FCStd",
+    "FreeCAD CAM 101 - Intro to CAM/Lesson 1/KM-Logo.FCStd",
+    "FreeCAD CAM 101 - Intro to CAM/Lesson 1/KM-Logo.svg",
+    "FreeCAD CAM 101 - Intro to CAM/Lesson 2/Panel.FCStd",
+    "FreeCAD CAM 101 - Intro to CAM/Lesson 3/class-tray.FCStd"
+  ],
   "Jobs": [
     "job_NibblerBOT 2D Engrave.json",
     "job_NibblerBOT 2D Panel.json",
