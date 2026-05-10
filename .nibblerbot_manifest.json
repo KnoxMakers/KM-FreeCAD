@@ -85,7 +85,7 @@
     "FreeCAD CAM 101 - Intro to CAM/Lesson 1/KM-Logo.svg",
     "FreeCAD CAM 101 - Intro to CAM/Lesson 2/Panel.FCStd",
     "FreeCAD CAM 101 - Intro to CAM/Lesson 3/class-tray.FCStd",
-    "FreeCAD CAM 102 - 2D Toolpath Strategies/Lesson 1/PocketShapOp.FCStd"
+    "FreeCAD CAM 102 - 2D Toolpath Strategies/Lesson 1/PocketOp.FCStd"
   ],
   "Jobs": [
     "job_NibblerBOT 2D Engrave.json",
