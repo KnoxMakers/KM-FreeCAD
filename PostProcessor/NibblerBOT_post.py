@@ -551,7 +551,10 @@ def parse(pathobj):
         # if OUTPUT_COMMENTS:
         #     out += linenumber() + "(" + pathobj.Label + ")\n"
 
-        for c in PathUtils.getPathWithPlacement(pathobj).Commands:
+        # Apply canned cycle terminator to insert G80/G98/G99 at the correct
+        # positions based on RetractMode annotations before processing commands.
+        processed_path = PostUtils.cannedCycleTerminator(PathUtils.getPathWithPlacement(pathobj))
+        for c in processed_path.Commands:
             outstring = []
             if blockDelete:
                 outstring.append("/ ")
@@ -564,7 +567,7 @@ def parse(pathobj):
                 if command == lastcommand:
                     outstring.pop(0)
 
-            if c.Name[0] == "(" and not OUTPUT_COMMENTS:  # command is a comment
+            if c.Name.startswith("(") and not OUTPUT_COMMENTS:  # command is a comment
                 continue
 
             # Now add the remaining parameters in order
@@ -606,15 +609,20 @@ def parse(pathobj):
                         ):
                             continue
                         else:
-                            pos = Units.Quantity(
-                                c.Parameters[param], FreeCAD.Units.Length
-                            )
-                            outstring.append(
-                                param
-                                + format(
-                                    float(pos.getValueAs(UNIT_FORMAT)), precision_string
+                            if param in ("A", "B", "C"):
+                                outstring.append(
+                                    param + format(float(c.Parameters[param]), precision_string)
                                 )
-                            )
+                            else:
+                                pos = Units.Quantity(
+                                    c.Parameters[param], FreeCAD.Units.Length
+                                )
+                                outstring.append(
+                                    param
+                                    + format(
+                                        float(pos.getValueAs(UNIT_FORMAT)), precision_string
+                                    )
+                                )
 
             # store the latest command
             lastcommand = command
