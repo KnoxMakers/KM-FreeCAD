@@ -134,6 +134,12 @@ def _open_with_module_selector(filepath):
 
     try:
         FreeCAD.loadFile(filepath, "", selected_module)
+        if ext == "svg":
+            try:
+                import FreeCADGui
+                FreeCADGui.SendMsgToActiveView("ViewFit")
+            except Exception:
+                pass
         return True
     except Exception as exc:
         FreeCAD.Console.PrintWarning(
@@ -529,6 +535,14 @@ def show_start_page():
         import FreeCADGui
         mw = FreeCADGui.getMainWindow()
         page = StartPage(mw)
+        try:
+            geo = QtWidgets.QApplication.primaryScreen().availableGeometry()
+        except AttributeError:
+            geo = QtWidgets.QApplication.desktop().availableGeometry()
+        page.move(
+            geo.x() + (geo.width() - page.width()) // 2,
+            geo.y() + (geo.height() - page.height()) // 2,
+        )
         page.show()
         FreeCAD.Console.PrintLog("KM-FreeCAD: Start page displayed.\n")
     except Exception as exc:
