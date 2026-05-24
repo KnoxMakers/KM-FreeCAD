@@ -158,10 +158,15 @@ def _load_in_freecad(filepath, module):
 
 
 def _add_recent_file(filepath):
-    """Add *filepath* to FreeCAD's recently-opened files list."""
+    """Prepend *filepath* to FreeCAD's MRU parameter list."""
     try:
-        import FreeCADGui
-        FreeCADGui.addRecentFile(filepath)
+        grp  = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/RecentFiles")
+        size = grp.GetInt("MRUSize", 20)
+        norm = os.path.normcase(filepath)
+        others = [e for i in range(size)
+                  if (e := grp.GetString(f"MRU{i}", "")) and os.path.normcase(e) != norm]
+        for i, path in enumerate([filepath, *others][:size]):
+            grp.SetString(f"MRU{i}", path)
     except Exception:
         pass
 
@@ -347,9 +352,8 @@ class _FileCard(QtWidgets.QFrame):
                     self._on_opened()
                 def _open_fcstd(path=_path):
                     try:
-                        print(f"KM-FreeCAD StartPage: Opening '{path}' in FreeCAD...")
-                        FreeCAD.openDocument(path)
-                        _add_recent_file(path)
+                        import FreeCADGui
+                        FreeCADGui.open(path)
                     except Exception as exc:
                         FreeCAD.Console.PrintWarning(
                             f"KM-FreeCAD StartPage: Could not open '{path}': {exc}\n"
