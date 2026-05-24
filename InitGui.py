@@ -6,7 +6,7 @@ Runs after the FreeCAD GUI is fully initialised, making it safe to show dialogs.
 
 Version comparison handles:
   v1.1rc3-cam+2  →  (1, 1, rc=3, build=2)
-  v1.1-cam+1     →  (1, 1, rc=None, build=1)   ← full release > any RC
+  v1.1.1cam+1    →  (1, 1, patch=1, rc=None, build=1)   ← full release > any RC
   v1.2rc1-cam+1  →  (1, 2, rc=1, build=1)
 
 Comparison order: major → minor → rc (None=release > int=rc) → build#
@@ -49,14 +49,15 @@ def check_for_freecad_update(
     # --- helpers (nested so they close over nothing external) ---------------
 
     def parse_tag(tag):
-        m = re.match(r'^v?(\d+)\.(\d+)(?:rc(\d+))?-cam\+(\d+)$', tag.strip())
+        m = re.match(r'^v?(\d+)\.(\d+)(?:\.(\d+))?(?:rc(\d+))?-?cam\+(\d+)$', tag.strip())
         if not m:
             return None
         return (
             int(m.group(1)),
             int(m.group(2)),
-            int(m.group(3)) if m.group(3) else None,  # None = full release
-            int(m.group(4)),
+            int(m.group(3)) if m.group(3) else 0,    # patch, default 0
+            int(m.group(4)) if m.group(4) else None,  # None = full release
+            int(m.group(5)),
         )
 
     def cmp_tags(tag_a, tag_b):
@@ -64,23 +65,24 @@ def check_for_freecad_update(
         b = parse_tag(tag_b)
         if a is None or b is None:
             return 0
-        for i in (0, 1):
+        for i in (0, 1, 2):  # major, minor, patch
             if a[i] != b[i]:
                 return a[i] - b[i]
-        a_rc, b_rc = a[2], b[2]
+        a_rc, b_rc = a[3], b[3]
         if a_rc is None and b_rc is not None:
             return 1  # full release > RC
         if a_rc is not None and b_rc is None:
             return -1  # RC < full release
         if a_rc != b_rc:
             return a_rc - b_rc  # both are ints here
-        return a[3] - b[3]
+        return a[4] - b[4]
 
     def running_version_info():
         try:
             ver = FreeCAD.Version()
             major = int(ver[0]) if ver[0].isdigit() else 0
             minor = int(ver[1]) if ver[1].isdigit() else 0
+            patch = int(ver[2]) if len(ver) > 2 and ver[2].isdigit() else 0
         except Exception:
             return None
         try:
@@ -98,8 +100,12 @@ def check_for_freecad_update(
             build_date = (int(parts[0]), int(parts[1]), int(parts[2]))
         except Exception:
             pass
-        rc_str = f"rc{rc}" if rc is not None else ""
-        approx_tag = f"v{major}.{minor}{rc_str}-cam+0"
+        cam_build_match = re.search(r'cam\+(\d+)', suffix) or re.search(r'cam\+(\d+)', branch)
+        cam_build = int(cam_build_match.group(1)) if cam_build_match else 0
+        if rc is not None:
+            approx_tag = f"v{major}.{minor}rc{rc}-cam+{cam_build}"
+        else:
+            approx_tag = f"v{major}.{minor}.{patch}cam+{cam_build}"
         return {
             "major": major,
             "minor": minor,
@@ -129,9 +135,7 @@ def check_for_freecad_update(
 
     def show_update_dialog(info, latest_tag, release_url, prefs):
         try:
-            current_desc = (
-                info["approx_tag"].replace("-cam+0", "-cam+?") if info else "unknown"
-            )
+            current_desc = info["approx_tag"] if info else "unknown"
             msg = QtWidgets.QMessageBox()
             msg.setWindowTitle("New cam+ FreeCAD Build Available")
             msg.setIcon(QtWidgets.QMessageBox.Information)

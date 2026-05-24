@@ -57,7 +57,8 @@
             "center_cut",
             "roughing",
             "single_flute",
-            "long_reach"
+            "long_reach",
+            "surfacing"
         ]
     },
     "Probe": {

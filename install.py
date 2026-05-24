@@ -26,11 +26,11 @@ try:
     build_suffix = FreeCAD.ConfigGet("BuildVersionSuffix")
     if "cam+" in build_suffix.lower():
         is_cam_plus_build = True
-        print(f"✓ Detected CAM+ custom build (suffix: {build_suffix})")
+        print(f"Detected CAM+ custom build (suffix: {build_suffix})")
         # CAM+ v1.1 uses v1.2 toolbit files
         if major == 1 and minor == 1:
             source_version_override = "v1-2"
-            print(f"  → Using v1-2 toolbit files for CAM+ v1.1")
+            print(f"  Using v1-2 toolbit files for CAM+ v1.1")
     else:
         print(
             f"Detected FreeCAD {version_string} (suffix: {build_suffix if build_suffix else 'none'})"
@@ -104,10 +104,6 @@ default_tool_lib_file = os.path.join(tool_lib_dir, "NibblerBOT.fctl")
 gcode_dir = os.path.join(freecad_dir, "Gcode")  # Gcode directory
 camcheck_dir = os.path.join(freecad_dir, "CAMCheck")  # CamCheck directory
 classes_dir = os.path.join(freecad_dir, "Classes")
-course_dir = os.path.join(classes_dir, "FreeCAD CAM 101 - Intro to CAM")
-lesson1_dir = os.path.join(course_dir, "Lesson 1")
-lesson2_dir = os.path.join(course_dir, "Lesson 2")
-lesson3_dir = os.path.join(course_dir, "Lesson 3")
 
 # Ensure directories exist
 for path in [
@@ -117,10 +113,6 @@ for path in [
     gcode_dir,
     camcheck_dir,
     classes_dir,
-    course_dir,
-    lesson1_dir,
-    lesson2_dir,
-    lesson3_dir,
 ]:
     if not os.path.exists(path):
         os.makedirs(path)
@@ -153,10 +145,21 @@ if major >= 1 and minor >= 1:
 
     # Set the BASE path (non-versioned) - FreeCAD will automatically resolve via mostRecentConfigFromBase
     camassets_base = os.path.join(freecad_dir, "CAMAssets")
-    if not tools_prefs.GetString("ToolPath"):
+
+    # FreeCAD's out-of-the-box default is some variant of:
+    #   ~/.local/share/FreeCAD/.../CamAssets/...
+    # Regardless of any versioned sub-segments (e.g. v1-1), we can identify it
+    # by checking that the path contains ".local/share/FreeCAD" and "CamAssets".
+    _current_tool_path = tools_prefs.GetString("ToolPath")
+    _is_fc_default = bool(_current_tool_path) and (
+        ".local/share/FreeCAD" in _current_tool_path
+        and "CamAssets" in _current_tool_path
+    )
+
+    if not _current_tool_path or _is_fc_default:
         tools_prefs.SetString("ToolPath", camassets_base)
         print(f"Set ToolPath (base) to: {camassets_base}")
-        print(f"  → Resolves to: {freecad_assets_dir}")
+        print(f"  Resolves to: {freecad_assets_dir}")
 
     if not tools_prefs.GetString("LastToolLibrary"):
         tools_prefs.SetString("LastToolLibrary", "toolbitlibrary://NibblerBOT")
@@ -253,16 +256,25 @@ if not prefs.GetBool("EnableExperimentalFeatures", False):
 
 # Copy all files from source directories to target directories
 source_dir = os.path.dirname(__file__)  # Directory containing this script
+def _norm_key(path):
+    """Normalize a manifest key to forward slashes for cross-platform consistency."""
+    return path.replace(os.sep, "/")
+
 source_subdirs = {
-    os.path.join(source_tools_base, "Bit"): tool_bit_dir,
-    os.path.join(source_tools_base, "Library"): tool_lib_dir,
-    os.path.join(source_tools_base, "Shape"): tool_shape_dir,
+    _norm_key(os.path.join(source_tools_base, "Bit")): tool_bit_dir,
+    _norm_key(os.path.join(source_tools_base, "Library")): tool_lib_dir,
+    _norm_key(os.path.join(source_tools_base, "Shape")): tool_shape_dir,
     "PostProcessor": os.path.join(FreeCAD.getUserAppDataDir(), "Macro"),
     "Jobs": freecad_dir,
-    os.path.join("Classes", "FreeCAD CAM 101 - Intro to CAM", "Lesson 1"): lesson1_dir,
-    os.path.join("Classes", "FreeCAD CAM 101 - Intro to CAM", "Lesson 2"): lesson2_dir,
-    os.path.join("Classes", "FreeCAD CAM 101 - Intro to CAM", "Lesson 3"): lesson3_dir,
 }
+
+# Dynamically discover all subdirectories under Classes/
+classes_source = os.path.join(source_dir, "Classes")
+if os.path.exists(classes_source):
+    for dirpath, dirnames, filenames in os.walk(classes_source):
+        rel = os.path.relpath(dirpath, source_dir)
+        rel_key = rel.replace(os.sep, "/")  # Normalize to forward slashes for cross-platform manifest keys
+        source_subdirs[rel_key] = os.path.join(freecad_dir, rel)
 
 manifest_path = os.path.join(freecad_dir, ".nibbler_manifest.json")
 
@@ -286,6 +298,7 @@ def sync_group(source_path, target_path, group_name, file_filter=None):
         f
         for f in os.listdir(source_path)
         if os.path.isfile(os.path.join(source_path, f))
+        and not f.endswith(".FCBak")
         and (file_filter(f) if file_filter else True)
     )
 
@@ -312,6 +325,7 @@ def sync_group(source_path, target_path, group_name, file_filter=None):
 for subdir, destination in source_subdirs.items():
     source_path = os.path.join(source_dir, subdir)
     if os.path.exists(source_path):
+        os.makedirs(destination, exist_ok=True)
         if subdir == "Jobs":
 
             def job_file_filter(filename):
@@ -322,5 +336,28 @@ for subdir, destination in source_subdirs.items():
             sync_group(source_path, destination, subdir)
     else:
         print(f"Source directory not found: {source_path}. Skipping.")
+
+# Configure Draft snap modes - enable specific snaps without touching others.
+# Snap index order (from gui_snapper.py):
+#   0:Lock, 1:Near, 2:Extension, 3:Parallel, 4:Grid,
+#   5:Endpoint, 6:Midpoint, 7:Perpendicular, 8:Angle, 9:Center,
+#   10:Ortho, 11:Intersection, 12:Special, 13:Dimensions, 14:WorkingPlane
+SNAP_MODES_LENGTH = 15
+REQUIRED_SNAPS_ON = {
+    0: "Lock (Snap Lock Global)",
+    5: "Endpoint",
+    6: "Midpoint",
+    9: "Center",
+    11: "Intersection",
+}
+draft_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Draft")
+current_modes = draft_prefs.GetString("snapModes", "1" + "0" * (SNAP_MODES_LENGTH - 1))
+# Pad or trim to the expected length in case the stored value is malformed
+modes_list = list(current_modes.ljust(SNAP_MODES_LENGTH, "0")[:SNAP_MODES_LENGTH])
+for idx, label in REQUIRED_SNAPS_ON.items():
+    if modes_list[idx] != "1":
+        modes_list[idx] = "1"
+        print(f"Draft snap: enabled {label} (index {idx})")
+draft_prefs.SetString("snapModes", "".join(modes_list))
 
 print("Installation complete!")
