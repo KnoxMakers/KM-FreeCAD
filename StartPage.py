@@ -143,7 +143,6 @@ def _load_in_freecad(filepath, module):
     ext = os.path.splitext(filepath)[1].lstrip(".").lower()
     try:
         FreeCAD.loadFile(filepath, "", module)
-        _add_recent_file(filepath)
         if ext == "svg":
             try:
                 import FreeCADGui
