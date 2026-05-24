@@ -460,8 +460,8 @@ class StartPage(QtWidgets.QDialog):
         scroll.setWidget(container)
 
         vbox = QtWidgets.QVBoxLayout(container)
-        vbox.setSpacing(12)
-        vbox.setContentsMargins(16, 16, 16, 16)
+        vbox.setSpacing(24)
+        vbox.setContentsMargins(16, 24, 16, 16)
 
         if not os.path.isdir(CLASSES_DIR):
             msg = QtWidgets.QLabel(
