@@ -498,14 +498,14 @@ class StartPage(QtWidgets.QDialog):
                 )
             h_layout.addWidget(logo_lbl)
 
-        title_lbl = QtWidgets.QLabel("Knox Makers  ·  FreeCAD Classes")
+        title_lbl = QtWidgets.QLabel("Knox Makers - Start Page")
         title_lbl.setStyleSheet(f"color: {_hdr_title}; font-size: 17px; font-weight: bold;")
         h_layout.addWidget(title_lbl)
         h_layout.addStretch()
 
-        path_lbl = QtWidgets.QLabel(CLASSES_DIR)
-        path_lbl.setStyleSheet(f"color: {_hdr_path}; font-size: 10px;")
-        h_layout.addWidget(path_lbl)
+        # path_lbl = QtWidgets.QLabel(CLASSES_DIR)
+        # path_lbl.setStyleSheet(f"color: {_hdr_path}; font-size: 10px;")
+        # h_layout.addWidget(path_lbl)
 
         # Close (×) button in the header
         close_hdr_btn = QtWidgets.QPushButton("\u00d7")
