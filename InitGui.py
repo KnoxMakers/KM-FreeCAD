@@ -232,14 +232,29 @@ def check_for_freecad_update(
 
 
 # ---------------------------------------------------------------------------
-# Schedule the check to run 2 seconds after the GUI finishes loading.
+# Schedule the start page and update check after the GUI finishes loading.
 # Using QTimer.singleShot keeps startup fast and avoids blocking the main thread.
 # ---------------------------------------------------------------------------
 try:
+    import sys as _sys
+    import os as _os
+
+    _addon_dir = _os.path.dirname(_os.path.abspath(__file__))
+    if _addon_dir not in _sys.path:
+        _sys.path.insert(0, _addon_dir)
+
     from PySide.QtCore import QTimer
 
+    def _show_start_page():
+        try:
+            from StartPage import show_start_page
+            show_start_page()
+        except Exception as _e:
+            FreeCAD.Console.PrintWarning(f"KM-FreeCAD: Could not show start page: {_e}\n")
+
+    QTimer.singleShot(1000, _show_start_page)
     QTimer.singleShot(2000, check_for_freecad_update)
-    FreeCAD.Console.PrintLog("KM-FreeCAD: cam+ update check scheduled.\n")
+    FreeCAD.Console.PrintLog("KM-FreeCAD: start page and cam+ update check scheduled.\n")
 
 except Exception as e:
-    FreeCAD.Console.PrintWarning(f"KM-FreeCAD: Could not schedule update check: {e}\n")
+    FreeCAD.Console.PrintWarning(f"KM-FreeCAD: Could not schedule startup tasks: {e}\n")
