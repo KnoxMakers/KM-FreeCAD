@@ -195,7 +195,7 @@ def _palette_hex(role):
 
 # Accent colour used for borders, titles, and separators throughout the UI.
 # A brighter shade is used on dark backgrounds for better contrast.
-_accent_color = "#e05c4b" if _is_dark_theme() else "#c0392b"
+_accent_color = "#e7e7e7" if _is_dark_theme() else "#000000"
 
 
 # ---------------------------------------------------------------------------
