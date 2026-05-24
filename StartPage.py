@@ -42,15 +42,11 @@ def _module_label(mod):
     return _MODULE_LABELS.get(base, base)
 
 
-def _open_with_module_selector(filepath):
-    """Open *filepath* in FreeCAD, mirroring the C++ SelectModule dialog.
+def _resolve_module(filepath):
+    """Return the importer module name for *filepath*, or None if cancelled.
 
-    Queries ``FreeCAD.getImportType()`` for registered importers.  If only one
-    exists the file is opened directly; if multiple exist a radio-button dialog
-    identical to FreeCAD's built-in 'Select Module' dialog is shown first.
-
-    Returns True when the user confirmed an import (or only one module was
-    available), False when the user cancelled.
+    Shows the SelectModule dialog when multiple importers are registered.
+    Does NOT load the file — call _load_in_freecad() afterwards.
     """
     ext = os.path.splitext(filepath)[1].lstrip(".").lower()
 
@@ -73,83 +69,83 @@ def _open_with_module_selector(filepath):
 
     if not modules:
         FreeCAD.Console.PrintWarning(f"KM-FreeCAD: No importer registered for .{ext}\n")
-        return False
+        return None
 
-    selected_module = modules[0]  # default when only one module
+    if len(modules) == 1:
+        return modules[0]
 
-    if len(modules) > 1:
-        # ---- Python replica of FreeCAD's C++ SelectModule dialog ----
-        dlg = QtWidgets.QDialog()
-        dlg.setWindowTitle("Select Module")
-        dlg.setWindowFlags(
-            dlg.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint
-        )
+    # ---- Python replica of FreeCAD's C++ SelectModule dialog ----
+    dlg = QtWidgets.QDialog()
+    dlg.setWindowTitle("Select Module")
+    dlg.setWindowFlags(
+        dlg.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint
+    )
 
-        grid = QtWidgets.QGridLayout(dlg)
-        grid.setSpacing(6)
-        grid.setContentsMargins(9, 9, 9, 9)
+    grid = QtWidgets.QGridLayout(dlg)
+    grid.setSpacing(6)
+    grid.setContentsMargins(9, 9, 9, 9)
 
-        group_box = QtWidgets.QGroupBox(f"Open {ext} as")
-        grid.addWidget(group_box, 0, 0)
-        grid_inner = QtWidgets.QGridLayout(group_box)
-        grid_inner.setSpacing(6)
-        grid_inner.setContentsMargins(9, 9, 9, 9)
+    group_box = QtWidgets.QGroupBox(f"Open {ext} as")
+    grid.addWidget(group_box, 0, 0)
+    grid_inner = QtWidgets.QGridLayout(group_box)
+    grid_inner.setSpacing(6)
+    grid_inner.setContentsMargins(9, 9, 9, 9)
 
-        btn_group = QtWidgets.QButtonGroup(dlg)
-        for i, mod in enumerate(modules):
-            rb = QtWidgets.QRadioButton(_module_label(mod))
-            rb.setObjectName(mod)
-            grid_inner.addWidget(rb, i, 0)
-            btn_group.addButton(rb, i)
+    btn_group = QtWidgets.QButtonGroup(dlg)
+    for i, mod in enumerate(modules):
+        rb = QtWidgets.QRadioButton(_module_label(mod))
+        rb.setObjectName(mod)
+        grid_inner.addWidget(rb, i, 0)
+        btn_group.addButton(rb, i)
 
-        grid.addItem(
-            QtWidgets.QSpacerItem(
-                20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
-            ),
-            1, 0,
-        )
+    grid.addItem(
+        QtWidgets.QSpacerItem(
+            20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
+        ),
+        1, 0,
+    )
 
-        btn_box = QtWidgets.QDialogButtonBox(
-            QtWidgets.QDialogButtonBox.Open | QtWidgets.QDialogButtonBox.Cancel
-        )
-        open_btn = btn_box.button(QtWidgets.QDialogButtonBox.Open)
-        open_btn.setEnabled(False)
-        grid.addWidget(btn_box, 2, 0)
+    btn_box = QtWidgets.QDialogButtonBox(
+        QtWidgets.QDialogButtonBox.Open | QtWidgets.QDialogButtonBox.Cancel
+    )
+    open_btn = btn_box.button(QtWidgets.QDialogButtonBox.Open)
+    open_btn.setEnabled(False)
+    grid.addWidget(btn_box, 2, 0)
 
-        btn_box.accepted.connect(dlg.accept)
-        btn_box.rejected.connect(dlg.reject)
+    btn_box.accepted.connect(dlg.accept)
+    btn_box.rejected.connect(dlg.reject)
 
-        def _on_radio_toggled(checked, _open_btn=open_btn):
-            if checked:
-                _open_btn.setEnabled(True)
+    def _on_radio_toggled(checked, _open_btn=open_btn):
+        if checked:
+            _open_btn.setEnabled(True)
 
-        for rb in [grid_inner.itemAt(i).widget() for i in range(grid_inner.count())]:
-            if isinstance(rb, QtWidgets.QRadioButton):
-                rb.toggled.connect(_on_radio_toggled)
+    for rb in [grid_inner.itemAt(i).widget() for i in range(grid_inner.count())]:
+        if isinstance(rb, QtWidgets.QRadioButton):
+            rb.toggled.connect(_on_radio_toggled)
 
-        if dlg.exec_() != QtWidgets.QDialog.Accepted:
-            return False
+    if dlg.exec_() != QtWidgets.QDialog.Accepted:
+        return None
 
-        checked_btn = btn_group.checkedButton()
-        if checked_btn is None:
-            return False
-        selected_module = checked_btn.objectName()
+    checked_btn = btn_group.checkedButton()
+    return checked_btn.objectName() if checked_btn else None
 
+
+def _load_in_freecad(filepath, module):
+    """Load *filepath* using *module* and run Fit All for SVG files."""
+    ext = os.path.splitext(filepath)[1].lstrip(".").lower()
     try:
-        FreeCAD.loadFile(filepath, "", selected_module)
+        FreeCAD.loadFile(filepath, "", module)
         if ext == "svg":
             try:
                 import FreeCADGui
                 FreeCADGui.SendMsgToActiveView("ViewFit")
             except Exception:
                 pass
-        return True
     except Exception as exc:
         FreeCAD.Console.PrintWarning(
             f"KM-FreeCAD: Could not open '{os.path.basename(filepath)}' "
-            f"with {selected_module}: {exc}\n"
+            f"with {module}: {exc}\n"
         )
-        return False
 
 _THUMB_W = 150
 _THUMB_H = 120
@@ -281,9 +277,12 @@ class _FileCard(QtWidgets.QFrame):
                         )
                 QtCore.QTimer.singleShot(0, _open_fcstd)
             elif ext in _FREECAD_EXT:
-                opened = _open_with_module_selector(self.filepath)
-                if opened and self._on_opened:
-                    self._on_opened()
+                module = _resolve_module(self.filepath)
+                if module is not None:
+                    _path = self.filepath
+                    if self._on_opened:
+                        self._on_opened()
+                    QtCore.QTimer.singleShot(0, lambda p=_path, m=module: _load_in_freecad(p, m))
             else:
                 QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.filepath))
         super().mousePressEvent(event)
