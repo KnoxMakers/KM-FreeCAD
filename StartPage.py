@@ -220,9 +220,24 @@ class _FileCard(QtWidgets.QFrame):
         self.setFixedWidth(_CARD_W)
         self.setToolTip(filepath)
 
+        if _is_dark_theme():
+            _card_bg      = "#2c2c42"
+            _card_border  = "#3d3d5e"
+            _thumb_bg     = "#1a1a2e"
+            _thumb_border = "#3d3d5e"
+            _text_color   = "#dddddd"
+            _badge_color  = "#888899"
+        else:
+            _card_bg      = _palette_hex(QtGui.QPalette.Base)
+            _card_border  = _palette_hex(QtGui.QPalette.Mid)
+            _thumb_bg     = _palette_hex(QtGui.QPalette.AlternateBase)
+            _thumb_border = _palette_hex(QtGui.QPalette.Mid)
+            _text_color   = _palette_hex(QtGui.QPalette.Text)
+            _badge_color  = _palette_hex(QtGui.QPalette.Dark)
+
         self.setStyleSheet(
-            "_FileCard { background: #2c2c42; border: 1px solid #3d3d5e; border-radius: 4px; }"
-            "_FileCard:hover { border: 1px solid #e74c3c; }"
+            f"_FileCard {{ background: {_card_bg}; border: 1px solid {_card_border}; border-radius: 4px; }}"
+            "_FileCard:hover { border: 1px solid #c0392b; }"
         )
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -233,7 +248,7 @@ class _FileCard(QtWidgets.QFrame):
         thumb = QtWidgets.QLabel()
         thumb.setAlignment(QtCore.Qt.AlignCenter)
         thumb.setFixedSize(_THUMB_W, _THUMB_H)
-        thumb.setStyleSheet("border: 1px solid #3d3d5e; background: #1a1a2e; border-radius: 3px;")
+        thumb.setStyleSheet(f"border: 1px solid {_thumb_border}; background: {_thumb_bg}; border-radius: 3px;")
 
         pix = _thumbnail_pixmap(filepath)
         if pix:
@@ -250,14 +265,14 @@ class _FileCard(QtWidgets.QFrame):
         lbl.setAlignment(QtCore.Qt.AlignCenter)
         lbl.setWordWrap(True)
         lbl.setFixedWidth(_CARD_W - 12)
-        lbl.setStyleSheet("font-size: 11px; color: #dddddd;")
+        lbl.setStyleSheet(f"font-size: 11px; color: {_text_color};")
         layout.addWidget(lbl)
 
         # ---- file-type badge ----
         ext_badge = QtWidgets.QLabel(os.path.splitext(filepath)[1].upper().lstrip("."))
         ext_badge.setAlignment(QtCore.Qt.AlignCenter)
         ext_badge.setFixedWidth(_CARD_W - 12)
-        ext_badge.setStyleSheet("font-size: 9px; color: #888899; font-style: italic;")
+        ext_badge.setStyleSheet(f"font-size: 9px; color: {_badge_color}; font-style: italic;")
         layout.addWidget(ext_badge)
 
     # ------------------------------------------------------------------
