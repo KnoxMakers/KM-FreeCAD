@@ -69,7 +69,7 @@ def _open_with_module_selector(filepath):
         if base not in seen_bases:
             seen_bases.add(base)
             modules.append(mod)
-    _ORDER = ["importSVG", "FreeCAD"]
+    _ORDER = ["FreeCAD", "importSVG"]
     modules.sort(key=lambda m: _ORDER.index(m) if m in _ORDER else len(_ORDER))
 
     if not modules:
