@@ -31,8 +31,8 @@ _FREECAD_EXT = {".fcstd", ".svg", ".step", ".stp", ".dxf"}
 
 
 _MODULE_LABELS = {
-    "FreeCAD":   "SVG as geometry (importSVG)",
-    "importSVG": "Image formats (FreeCAD)",
+    "FreeCAD":   "Image formats (FreeCAD)",
+    "importSVG": "SVG as geometry (importSVG)",
 }
 
 
@@ -59,7 +59,9 @@ def _open_with_module_selector(filepath):
     except Exception:
         raw_modules = []
 
-    # Deduplicate: drop "Gui" variants when the base module already appears
+    # Deduplicate: drop "Gui" variants when the base module already appears.
+    # Sort so importSVG (geometry) appears before FreeCAD (image), matching
+    # FreeCAD's own SelectModule dialog order.
     seen_bases = set()
     modules = []
     for mod in raw_modules:
@@ -67,6 +69,8 @@ def _open_with_module_selector(filepath):
         if base not in seen_bases:
             seen_bases.add(base)
             modules.append(mod)
+    _ORDER = ["importSVG", "FreeCAD"]
+    modules.sort(key=lambda m: _ORDER.index(m) if m in _ORDER else len(_ORDER))
 
     if not modules:
         FreeCAD.Console.PrintWarning(f"KM-FreeCAD: No importer registered for .{ext}\n")
