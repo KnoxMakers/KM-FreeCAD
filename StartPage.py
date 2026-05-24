@@ -193,6 +193,11 @@ def _palette_hex(role):
     return QtWidgets.QApplication.palette().color(role).name()
 
 
+# Accent colour used for borders, titles, and separators throughout the UI.
+# A brighter shade is used on dark backgrounds for better contrast.
+_accent_color = "#e05c4b" if _is_dark_theme() else "#c0392b"
+
+
 # ---------------------------------------------------------------------------
 # Thumbnail extraction
 # ---------------------------------------------------------------------------
@@ -264,7 +269,7 @@ class _FileCard(QtWidgets.QFrame):
 
         self.setStyleSheet(
             f"_FileCard {{ background: {_card_bg}; border: 1px solid {_card_border}; border-radius: 4px; }}"
-            "_FileCard:hover { border: 1px solid #c0392b; }"
+            f"_FileCard:hover {{ border: 1px solid {_accent_color}; }}"
         )
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -362,8 +367,8 @@ def _build_lesson_widget(lesson_name, lesson_path, on_file_opened=None):
 
     lbl = QtWidgets.QLabel(lesson_name)
     lbl.setStyleSheet(
-        "font-size: 12px; font-weight: bold;"
-        " border-bottom: 2px solid #c0392b; padding-bottom: 3px; margin-bottom: 4px;"
+        f"font-size: 12px; font-weight: bold;"
+        f" border-bottom: 2px solid {_accent_color}; padding-bottom: 3px; margin-bottom: 4px;"
     )
     vbox.addWidget(lbl)
 
@@ -391,8 +396,8 @@ def _build_class_section(class_name, class_path, on_file_opened=None):
     frame = QtWidgets.QFrame()
     frame.setObjectName("kmClassSection")
     frame.setStyleSheet(
-        "QFrame#kmClassSection {"
-        "  border: 2px solid #c0392b;"
+        f"QFrame#kmClassSection {{"
+        f"  border: 2px solid {_accent_color};"
         "  border-radius: 6px;"
         "}"
         # Child widgets must not inherit the frame border
@@ -407,14 +412,14 @@ def _build_class_section(class_name, class_path, on_file_opened=None):
     # Class title label at the top of the frame
     title_lbl = QtWidgets.QLabel(class_name)
     title_lbl.setStyleSheet(
-        "font-size: 14px; font-weight: bold; color: #c0392b; border: none; padding: 2px 0;"
+        f"font-size: 14px; font-weight: bold; color: {_accent_color}; border: none; padding: 2px 0;"
     )
     outer.addWidget(title_lbl)
 
     # Thin separator under the title
     sep = QtWidgets.QFrame()
     sep.setFrameShape(QtWidgets.QFrame.HLine)
-    sep.setStyleSheet("border: none; background: #c0392b; max-height: 1px; margin-bottom: 4px;")
+    sep.setStyleSheet(f"border: none; background: {_accent_color}; max-height: 1px; margin-bottom: 4px;")
     outer.addWidget(sep)
 
     lessons = sorted(
