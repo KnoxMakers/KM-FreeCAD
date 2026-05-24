@@ -340,28 +340,35 @@ def _build_lesson_widget(lesson_name, lesson_path, on_file_opened=None):
 # ---------------------------------------------------------------------------
 
 def _build_class_section(class_name, class_path, on_file_opened=None):
-    """Return a QGroupBox for one class (no checkbox — always expanded)."""
-    group = QtWidgets.QGroupBox(class_name)
-    group.setObjectName("kmClassSection")
-    group.setStyleSheet(
-        "QGroupBox#kmClassSection {"
-        "  font-size: 14px; font-weight: bold;"
-        "  border: 2px solid #ff0000;"
+    """Return a framed widget for one class with an explicit title label."""
+    frame = QtWidgets.QFrame()
+    frame.setObjectName("kmClassSection")
+    frame.setStyleSheet(
+        "QFrame#kmClassSection {"
+        "  border: 2px solid #c0392b;"
         "  border-radius: 6px;"
-        "  margin-top: 18px;"
-        "  padding-top: 10px;"
         "}"
-        "QGroupBox#kmClassSection::title {"
-        "  subcontrol-origin: margin;"
-        "  left: 14px;"
-        "  color: #c0392b;"
-        "  padding: 0 6px;"
-        "}"
+        # Child widgets must not inherit the frame border
+        "QFrame#kmClassSection > QWidget { border: none; }"
+        "QFrame#kmClassSection > QLabel { border: none; }"
     )
 
-    group_layout = QtWidgets.QVBoxLayout(group)
-    group_layout.setSpacing(4)
-    group_layout.setContentsMargins(4, 4, 4, 8)
+    outer = QtWidgets.QVBoxLayout(frame)
+    outer.setSpacing(4)
+    outer.setContentsMargins(10, 8, 10, 10)
+
+    # Class title label at the top of the frame
+    title_lbl = QtWidgets.QLabel(class_name)
+    title_lbl.setStyleSheet(
+        "font-size: 14px; font-weight: bold; color: #c0392b; border: none; padding: 2px 0;"
+    )
+    outer.addWidget(title_lbl)
+
+    # Thin separator under the title
+    sep = QtWidgets.QFrame()
+    sep.setFrameShape(QtWidgets.QFrame.HLine)
+    sep.setStyleSheet("border: none; background: #c0392b; max-height: 1px; margin-bottom: 4px;")
+    outer.addWidget(sep)
 
     lessons = sorted(
         d for d in os.listdir(class_path)
@@ -374,13 +381,13 @@ def _build_class_section(class_name, class_path, on_file_opened=None):
             lesson_name, os.path.join(class_path, lesson_name), on_file_opened
         )
         if lesson_widget:
-            group_layout.addWidget(lesson_widget)
+            outer.addWidget(lesson_widget)
             lesson_added = True
 
     if not lesson_added:
-        group_layout.addWidget(QtWidgets.QLabel("  (no files found)"))
+        outer.addWidget(QtWidgets.QLabel("  (no files found)"))
 
-    return group
+    return frame
 
 
 # ---------------------------------------------------------------------------
