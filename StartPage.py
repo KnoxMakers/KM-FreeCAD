@@ -29,6 +29,45 @@ _SHOW_EXT = {".fcstd", ".svg", ".png", ".jpg", ".jpeg", ".step", ".stp", ".dxf",
 # Extensions that should be opened inside FreeCAD rather than the OS viewer
 _FREECAD_EXT = {".fcstd", ".svg", ".step", ".stp", ".dxf"}
 
+
+def _open_svg_dialog(filepath):
+    """Show an Image / Geometry choice dialog then import the SVG into FreeCAD."""
+    msg = QtWidgets.QMessageBox()
+    msg.setWindowTitle("Open SVG")
+    msg.setText(os.path.basename(filepath))
+    msg.setInformativeText(
+        "Open this SVG as editable <b>Geometry</b> (Draft curves/shapes), "
+        "or as a flat <b>Image</b> plane in the 3D view?"
+    )
+    geo_btn = msg.addButton("Geometry", QtWidgets.QMessageBox.AcceptRole)
+    img_btn = msg.addButton("Image", QtWidgets.QMessageBox.AcceptRole)
+    msg.addButton("Cancel", QtWidgets.QMessageBox.RejectRole)
+    msg.setDefaultButton(geo_btn)
+    msg.exec_()
+
+    clicked = msg.clickedButton()
+    if clicked == geo_btn:
+        try:
+            import importSVG
+            importSVG.open(filepath)
+        except Exception as exc:
+            FreeCAD.Console.PrintWarning(
+                f"KM-FreeCAD: SVG geometry import failed: {exc}\n"
+            )
+    elif clicked == img_btn:
+        try:
+            import FreeCAD as _FC
+            doc = _FC.activeDocument() or _FC.newDocument()
+            import FreeCADGui
+            imageplane = doc.addObject("Image::ImagePlane", "ImagePlane")
+            imageplane.ImageFile = filepath
+            doc.recompute()
+            FreeCADGui.SendMsgToActiveView("ViewFit")
+        except Exception as exc:
+            FreeCAD.Console.PrintWarning(
+                f"KM-FreeCAD: SVG image import failed: {exc}\n"
+            )
+
 _THUMB_W = 150
 _THUMB_H = 120
 _CARD_W  = 170
@@ -160,14 +199,17 @@ class _FileCard(QtWidgets.QFrame):
                         f"KM-FreeCAD StartPage: Could not open '{self.filepath}': {exc}\n"
                     )
             elif ext in _FREECAD_EXT:
-                # Open SVG / STEP / DXF inside FreeCAD using the registered importer
-                try:
-                    import FreeCADGui
-                    FreeCADGui.open(self.filepath)
-                except Exception as exc:
-                    FreeCAD.Console.PrintWarning(
-                        f"KM-FreeCAD StartPage: Could not open '{self.filepath}': {exc}\n"
-                    )
+                if ext == ".svg":
+                    _open_svg_dialog(self.filepath)
+                else:
+                    # STEP / DXF — open directly via FreeCAD's registered importer
+                    try:
+                        import FreeCADGui
+                        FreeCADGui.open(self.filepath)
+                    except Exception as exc:
+                        FreeCAD.Console.PrintWarning(
+                            f"KM-FreeCAD StartPage: Could not open '{self.filepath}': {exc}\n"
+                        )
             else:
                 QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.filepath))
         super().mousePressEvent(event)
@@ -204,9 +246,9 @@ def _build_lesson_widget(lesson_name, lesson_path):
     vbox.setSpacing(6)
 
     lbl = QtWidgets.QLabel(lesson_name)
-    sep = _palette_hex(QtGui.QPalette.Mid)
     lbl.setStyleSheet(
-        f"font-size: 12px; font-weight: bold; border-bottom: 1px solid {sep}; padding-bottom: 2px;"
+        "font-size: 12px; font-weight: bold;"
+        " border-bottom: 2px solid #c0392b; padding-bottom: 3px; margin-bottom: 4px;"
     )
     vbox.addWidget(lbl)
 
@@ -237,14 +279,14 @@ def _build_class_section(class_name, class_path):
         "  font-size: 14px; font-weight: bold;"
         "  border: 2px solid #c0392b;"
         "  border-radius: 6px;"
-        "  margin-top: 12px;"
-        "  padding-top: 6px;"
+        "  margin-top: 18px;"
+        "  padding-top: 10px;"
         "}"
         "QGroupBox::title {"
         "  subcontrol-origin: margin;"
         "  left: 14px;"
         "  color: #c0392b;"
-        "  padding: 0 4px;"
+        "  padding: 0 6px;"
         "}"
     )
 

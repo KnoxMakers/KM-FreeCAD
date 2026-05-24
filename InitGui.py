@@ -255,9 +255,10 @@ try:
         except Exception as _e:
             FreeCAD.Console.PrintWarning(f"KM-FreeCAD: Could not show start page: {_e}\n")
 
-    def _setup_km_menu():
+    def _setup_km_menu(_dir=_addon_dir):
         """Add a Knox Makers menu and toolbar button to FreeCAD's main window."""
         try:
+            import os
             import FreeCADGui
             from PySide import QtWidgets, QtGui
 
@@ -268,7 +269,7 @@ try:
                 if _a.text() == "Knox Makers":
                     return
 
-            icon_path = _os.path.join(_addon_dir, "icons", "KnoxMakers.svg")
+            icon_path = os.path.join(_dir, "icons", "KnoxMakers.svg")
             icon = QtGui.QIcon(icon_path)
 
             # Action shared by menu and toolbar
