@@ -156,7 +156,34 @@ _ADDON_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def _is_dark_theme():
-    """Return True when the application palette has a dark window background."""
+    """Return True when FreeCAD is running a dark UI theme.
+
+    Checks in order of reliability:
+    1. FreeCAD's stored stylesheet preference (the name contains 'dark').
+    2. The main window's own widget palette (FreeCAD themes via widget-level
+       stylesheets, so the app-level palette is often wrong).
+    3. Application palette fallback.
+    """
+    # 1. FreeCAD preference — most reliable
+    try:
+        ss = FreeCAD.ParamGet(
+            "User parameter:BaseApp/Preferences/MainWindow"
+        ).GetString("StyleSheet", "")
+        if ss:
+            return "dark" in ss.lower()
+    except Exception:
+        pass
+
+    # 2. Main window widget palette
+    try:
+        import FreeCADGui
+        mw = FreeCADGui.getMainWindow()
+        bg = mw.palette().color(mw.backgroundRole())
+        return bg.lightness() < 128
+    except Exception:
+        pass
+
+    # 3. Application palette fallback
     pal = QtWidgets.QApplication.palette()
     return pal.color(QtGui.QPalette.Window).lightness() < 128
 
@@ -435,15 +462,15 @@ class StartPage(QtWidgets.QDialog):
 
         # ---- header bar (also acts as drag handle) ----
         if _is_dark_theme():
-            _hdr_bg       = "#1a1a2e"
-            _hdr_title    = "#ffffff"
-            _hdr_path     = "#aaaacc"
-            _hdr_btn_fg   = "#ffffff"
+            _hdr_bg     = "#1a1a2e"
+            _hdr_title  = "#ffffff"
+            _hdr_path   = "#aaaacc"
+            _hdr_btn_fg = "#ffffff"
         else:
-            _hdr_bg       = _palette_hex(QtGui.QPalette.Button)
-            _hdr_title    = _palette_hex(QtGui.QPalette.ButtonText)
-            _hdr_path     = _palette_hex(QtGui.QPalette.Mid)
-            _hdr_btn_fg   = _palette_hex(QtGui.QPalette.ButtonText)
+            _hdr_bg     = "#e8e8e8"
+            _hdr_title  = "#1a1a2e"
+            _hdr_path   = "#555555"
+            _hdr_btn_fg = "#1a1a2e"
 
         header = QtWidgets.QWidget()
         header.setFixedHeight(56)
