@@ -35,6 +35,14 @@ _MODULE_LABELS = {
     "importSVG": "SVG as geometry (importSVG)",
 }
 
+# Card and thumbnail dimensions
+_THUMB_W   = 150
+_THUMB_H   = 120
+_CARD_W    = 170
+
+# Addon directory (used to locate icon assets)
+_ADDON_DIR = os.path.dirname(os.path.abspath(__file__))
+
 
 def _module_label(mod):
     """Return a human-readable label for a FreeCAD importer module name."""
@@ -147,13 +155,6 @@ def _load_in_freecad(filepath, module):
             f"with {module}: {exc}\n"
         )
 
-_THUMB_W = 150
-_THUMB_H = 120
-_CARD_W  = 170
-
-# Addon directory (used to locate icon assets)
-_ADDON_DIR = os.path.dirname(os.path.abspath(__file__))
-
 
 def _is_dark_theme():
     """Return True when FreeCAD is running a dark UI theme.
@@ -193,10 +194,43 @@ def _palette_hex(role):
     return QtWidgets.QApplication.palette().color(role).name()
 
 
-# Accent colour used for borders, titles, and separators throughout the UI.
-# Evaluated at dialog-build time (not module-load time) so _is_dark_theme() is reliable.
-def _accent_color():
-    return "#e7e7e7" if _is_dark_theme() else "#000000"
+def _get_theme_colors():
+    """Return a dict of all theme-aware UI colours, resolved in a single call.
+
+    Call once at the start of each build function instead of calling
+    _is_dark_theme() or _palette_hex() individually throughout.
+
+    Keys: accent, card_bg, card_border, thumb_bg, thumb_border,
+          text, badge, hdr_bg, hdr_title, hdr_path, hdr_btn_fg
+    """
+    if _is_dark_theme():
+        return dict(
+            accent       = "#e7e7e7",
+            card_bg      = "#2d2d2d",
+            card_border  = "#4a4a4a",
+            thumb_bg     = "#1e1e1e",
+            thumb_border = "#4a4a4a",
+            text         = "#dddddd",
+            badge        = "#888888",
+            hdr_bg       = "#2d2d2d",
+            hdr_title    = "#ffffff",
+            hdr_path     = "#aaaaaa",
+            hdr_btn_fg   = "#ffffff",
+        )
+    return dict(
+        accent       = "#000000",
+        card_bg      = _palette_hex(QtGui.QPalette.Base),
+        card_border  = _palette_hex(QtGui.QPalette.Mid),
+        thumb_bg     = _palette_hex(QtGui.QPalette.AlternateBase),
+        thumb_border = _palette_hex(QtGui.QPalette.Mid),
+        text         = _palette_hex(QtGui.QPalette.Text),
+        badge        = _palette_hex(QtGui.QPalette.Dark),
+        hdr_bg       = "#e8e8e8",
+        hdr_title    = "#1e1e1e",
+        hdr_path     = "#555555",
+        hdr_btn_fg   = "#1e1e1e",
+    )
+
 
 # ---------------------------------------------------------------------------
 # Thumbnail extraction
@@ -252,24 +286,10 @@ class _FileCard(QtWidgets.QFrame):
         self.setFixedWidth(_CARD_W)
         self.setToolTip(filepath)
 
-        if _is_dark_theme():
-            _card_bg      = "#2d2d2d"
-            _card_border  = "#4a4a4a"
-            _thumb_bg     = "#1e1e1e"
-            _thumb_border = "#4a4a4a"
-            _text_color   = "#dddddd"
-            _badge_color  = "#888888"
-        else:
-            _card_bg      = _palette_hex(QtGui.QPalette.Base)
-            _card_border  = _palette_hex(QtGui.QPalette.Mid)
-            _thumb_bg     = _palette_hex(QtGui.QPalette.AlternateBase)
-            _thumb_border = _palette_hex(QtGui.QPalette.Mid)
-            _text_color   = _palette_hex(QtGui.QPalette.Text)
-            _badge_color  = _palette_hex(QtGui.QPalette.Dark)
-
+        tc = _get_theme_colors()
         self.setStyleSheet(
-            f"_FileCard {{ background: {_card_bg}; border: 1px solid {_card_border}; border-radius: 4px; }}"
-            f"_FileCard:hover {{ border: 1px solid {_accent_color()}; }}"
+            f"_FileCard {{ background: {tc['card_bg']}; border: 1px solid {tc['card_border']}; border-radius: 4px; }}"
+            f"_FileCard:hover {{ border: 1px solid {tc['accent']}; }}"
         )
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -280,7 +300,7 @@ class _FileCard(QtWidgets.QFrame):
         thumb = QtWidgets.QLabel()
         thumb.setAlignment(QtCore.Qt.AlignCenter)
         thumb.setFixedSize(_THUMB_W, _THUMB_H)
-        thumb.setStyleSheet(f"border: 1px solid {_thumb_border}; background: {_thumb_bg}; border-radius: 3px;")
+        thumb.setStyleSheet(f"border: 1px solid {tc['thumb_border']}; background: {tc['thumb_bg']}; border-radius: 3px;")
 
         pix = _thumbnail_pixmap(filepath)
         if pix:
@@ -297,14 +317,14 @@ class _FileCard(QtWidgets.QFrame):
         lbl.setAlignment(QtCore.Qt.AlignCenter)
         lbl.setWordWrap(True)
         lbl.setFixedWidth(_CARD_W - 12)
-        lbl.setStyleSheet(f"font-size: 11px; color: {_text_color};")
+        lbl.setStyleSheet(f"font-size: 11px; color: {tc['text']};")
         layout.addWidget(lbl)
 
         # ---- file-type badge ----
         ext_badge = QtWidgets.QLabel(os.path.splitext(filepath)[1].upper().lstrip("."))
         ext_badge.setAlignment(QtCore.Qt.AlignCenter)
         ext_badge.setFixedWidth(_CARD_W - 12)
-        ext_badge.setStyleSheet(f"font-size: 9px; color: {_badge_color}; font-style: italic;")
+        ext_badge.setStyleSheet(f"font-size: 9px; color: {tc['badge']}; font-style: italic;")
         layout.addWidget(ext_badge)
 
     # ------------------------------------------------------------------
@@ -360,6 +380,7 @@ def _build_lesson_widget(lesson_name, lesson_path, on_file_opened=None):
     if not files:
         return None
 
+    tc = _get_theme_colors()
     widget = QtWidgets.QWidget()
     vbox = QtWidgets.QVBoxLayout(widget)
     vbox.setContentsMargins(8, 2, 8, 8)
@@ -368,7 +389,7 @@ def _build_lesson_widget(lesson_name, lesson_path, on_file_opened=None):
     lbl = QtWidgets.QLabel(lesson_name)
     lbl.setStyleSheet(
         f"font-size: 12px; font-weight: bold;"
-        f" border-bottom: 2px solid {_accent_color()}; padding-bottom: 3px; margin-bottom: 4px;"
+        f" border-bottom: 2px solid {tc['accent']}; padding-bottom: 3px; margin-bottom: 4px;"
     )
     vbox.addWidget(lbl)
 
@@ -393,14 +414,11 @@ def _build_lesson_widget(lesson_name, lesson_path, on_file_opened=None):
 
 def _build_class_section(class_name, class_path, on_file_opened=None):
     """Return a framed widget for one class with an explicit title label."""
+    tc = _get_theme_colors()
     frame = QtWidgets.QFrame()
     frame.setObjectName("kmClassSection")
     frame.setStyleSheet(
-        f"QFrame#kmClassSection {{"
-        f"  border: 2px solid {_accent_color()};"
-        "  border-radius: 6px;"
-        "}"
-        # Child widgets must not inherit the frame border
+        f"QFrame#kmClassSection {{ border: 2px solid {tc['accent']}; border-radius: 6px; }}"
         "QFrame#kmClassSection > QWidget { border: none; }"
         "QFrame#kmClassSection > QLabel { border: none; }"
     )
@@ -412,14 +430,14 @@ def _build_class_section(class_name, class_path, on_file_opened=None):
     # Class title label at the top of the frame
     title_lbl = QtWidgets.QLabel(class_name)
     title_lbl.setStyleSheet(
-        f"font-size: 14px; font-weight: bold; color: {_accent_color()}; border: none; padding: 2px 0;"
+        f"font-size: 14px; font-weight: bold; color: {tc['accent']}; border: none; padding: 2px 0;"
     )
     outer.addWidget(title_lbl)
 
     # Thin separator under the title
     sep = QtWidgets.QFrame()
     sep.setFrameShape(QtWidgets.QFrame.HLine)
-    sep.setStyleSheet(f"border: none; background: {_accent_color()}; max-height: 1px; margin-bottom: 4px;")
+    sep.setStyleSheet(f"border: none; background: {tc['accent']}; max-height: 1px; margin-bottom: 4px;")
     outer.addWidget(sep)
 
     lessons = sorted(
@@ -466,20 +484,10 @@ class StartPage(QtWidgets.QDialog):
         outer.setSpacing(0)
 
         # ---- header bar (also acts as drag handle) ----
-        if _is_dark_theme():
-            _hdr_bg     = "#2d2d2d"
-            _hdr_title  = "#ffffff"
-            _hdr_path   = "#aaaaaa"
-            _hdr_btn_fg = "#ffffff"
-        else:
-            _hdr_bg     = "#e8e8e8"
-            _hdr_title  = "#1e1e1e"
-            _hdr_path   = "#555555"
-            _hdr_btn_fg = "#1e1e1e"
-
+        tc = _get_theme_colors()
         header = QtWidgets.QWidget()
         header.setFixedHeight(56)
-        header.setStyleSheet(f"background: {_hdr_bg};")
+        header.setStyleSheet(f"background: {tc['hdr_bg']};")
         header.setCursor(QtCore.Qt.SizeAllCursor)
         header.mousePressEvent   = self._on_header_press
         header.mouseMoveEvent    = self._on_header_move
@@ -499,21 +507,22 @@ class StartPage(QtWidgets.QDialog):
             h_layout.addWidget(logo_lbl)
 
         title_lbl = QtWidgets.QLabel("Knox Makers - Start Page")
-        title_lbl.setStyleSheet(f"color: {_hdr_title}; font-size: 17px; font-weight: bold;")
+        title_lbl.setStyleSheet(f"color: {tc['hdr_title']}; font-size: 17px; font-weight: bold;")
         h_layout.addWidget(title_lbl)
         h_layout.addStretch()
 
+        # do not remove below
         # path_lbl = QtWidgets.QLabel(CLASSES_DIR)
-        # path_lbl.setStyleSheet(f"color: {_hdr_path}; font-size: 10px;")
+        # path_lbl.setStyleSheet(f"color: {tc['hdr_path']}; font-size: 10px;")
         # h_layout.addWidget(path_lbl)
 
         # Close (×) button in the header
         close_hdr_btn = QtWidgets.QPushButton("\u00d7")
         close_hdr_btn.setFixedSize(32, 32)
         close_hdr_btn.setStyleSheet(
-            f"QPushButton {{ color: {_hdr_btn_fg}; background: transparent;"
+            f"QPushButton {{ color: {tc['hdr_btn_fg']}; background: transparent;"
             " border: none; font-size: 20px; font-weight: bold; }"
-            f"QPushButton:hover {{ background: rgba(128,128,128,0.3); color: {_hdr_btn_fg}; border-radius: 4px; }}"
+            f"QPushButton:hover {{ background: rgba(128,128,128,0.3); color: {tc['hdr_btn_fg']}; border-radius: 4px; }}"
         )
         close_hdr_btn.clicked.connect(self.close)
         h_layout.addWidget(close_hdr_btn)
