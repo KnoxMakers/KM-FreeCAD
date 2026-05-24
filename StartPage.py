@@ -347,6 +347,7 @@ class _FileCard(QtWidgets.QFrame):
                     self._on_opened()
                 def _open_fcstd(path=_path):
                     try:
+                        print(f"KM-FreeCAD StartPage: Opening '{path}' in FreeCAD...")
                         FreeCAD.openDocument(path)
                         _add_recent_file(path)
                     except Exception as exc:
