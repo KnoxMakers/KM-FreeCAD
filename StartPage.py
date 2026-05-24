@@ -31,8 +31,8 @@ _FREECAD_EXT = {".fcstd", ".svg", ".step", ".stp", ".dxf"}
 
 
 _MODULE_LABELS = {
-    "FreeCAD":   "Image formats (FreeCAD)",
-    "importSVG": "SVG as geometry (importSVG)",
+    "FreeCAD":   "SVG as geometry (importSVG)",
+    "importSVG": "Image formats (FreeCAD)",
 }
 
 
@@ -221,13 +221,9 @@ class _FileCard(QtWidgets.QFrame):
         self.setFixedWidth(_CARD_W)
         self.setToolTip(filepath)
 
-        # Adapt card colours to the active theme
-        base   = _palette_hex(QtGui.QPalette.Base)
-        border = _palette_hex(QtGui.QPalette.Mid)
-        hi     = _palette_hex(QtGui.QPalette.Highlight)
         self.setStyleSheet(
-            f"_FileCard {{ background: {base}; border-radius: 4px; }}"
-            f"_FileCard:hover {{ border: 1px solid {hi}; }}"
+            "_FileCard { background: #2c2c42; border: 1px solid #3d3d5e; border-radius: 4px; }"
+            "_FileCard:hover { border: 1px solid #e74c3c; }"
         )
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -238,9 +234,7 @@ class _FileCard(QtWidgets.QFrame):
         thumb = QtWidgets.QLabel()
         thumb.setAlignment(QtCore.Qt.AlignCenter)
         thumb.setFixedSize(_THUMB_W, _THUMB_H)
-        border = _palette_hex(QtGui.QPalette.Mid)
-        base   = _palette_hex(QtGui.QPalette.Base)
-        thumb.setStyleSheet(f"border: 1px solid {border}; background: {base}; border-radius: 3px;")
+        thumb.setStyleSheet("border: 1px solid #3d3d5e; background: #1a1a2e; border-radius: 3px;")
 
         pix = _thumbnail_pixmap(filepath)
         if pix:
@@ -257,15 +251,14 @@ class _FileCard(QtWidgets.QFrame):
         lbl.setAlignment(QtCore.Qt.AlignCenter)
         lbl.setWordWrap(True)
         lbl.setFixedWidth(_CARD_W - 12)
-        lbl.setStyleSheet("font-size: 11px;")
+        lbl.setStyleSheet("font-size: 11px; color: #dddddd;")
         layout.addWidget(lbl)
 
         # ---- file-type badge ----
-        dim = _palette_hex(QtGui.QPalette.Dark) if _is_dark_theme() else _palette_hex(QtGui.QPalette.Mid)
         ext_badge = QtWidgets.QLabel(os.path.splitext(filepath)[1].upper().lstrip("."))
         ext_badge.setAlignment(QtCore.Qt.AlignCenter)
         ext_badge.setFixedWidth(_CARD_W - 12)
-        ext_badge.setStyleSheet(f"font-size: 9px; color: {dim}; font-style: italic;")
+        ext_badge.setStyleSheet("font-size: 9px; color: #888899; font-style: italic;")
         layout.addWidget(ext_badge)
 
     # ------------------------------------------------------------------
