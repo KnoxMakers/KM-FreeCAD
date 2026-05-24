@@ -508,7 +508,7 @@ class StartPage(QtWidgets.QDialog):
         close_hdr_btn.setStyleSheet(
             f"QPushButton {{ color: {_hdr_btn_fg}; background: transparent;"
             " border: none; font-size: 20px; font-weight: bold; }"
-            "QPushButton:hover { background: #c0392b; color: #ffffff; border-radius: 4px; }"
+            f"QPushButton:hover {{ background: rgba(128,128,128,0.3); color: {_hdr_btn_fg}; border-radius: 4px; }}"
         )
         close_hdr_btn.clicked.connect(self.close)
         h_layout.addWidget(close_hdr_btn)
