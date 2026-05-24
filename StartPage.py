@@ -30,43 +30,98 @@ _SHOW_EXT = {".fcstd", ".svg", ".png", ".jpg", ".jpeg", ".step", ".stp", ".dxf",
 _FREECAD_EXT = {".fcstd", ".svg", ".step", ".stp", ".dxf"}
 
 
-def _open_svg_dialog(filepath):
-    """Show an Image / Geometry choice dialog then import the SVG into FreeCAD."""
-    msg = QtWidgets.QMessageBox()
-    msg.setWindowTitle("Open SVG")
-    msg.setText(os.path.basename(filepath))
-    msg.setInformativeText(
-        "Open this SVG as editable <b>Geometry</b> (Draft curves/shapes), "
-        "or as a flat <b>Image</b> plane in the 3D view?"
-    )
-    geo_btn = msg.addButton("Geometry", QtWidgets.QMessageBox.AcceptRole)
-    img_btn = msg.addButton("Image", QtWidgets.QMessageBox.AcceptRole)
-    msg.addButton("Cancel", QtWidgets.QMessageBox.RejectRole)
-    msg.setDefaultButton(geo_btn)
-    msg.exec_()
+def _open_with_module_selector(filepath):
+    """Open *filepath* in FreeCAD, mirroring the C++ SelectModule dialog.
 
-    clicked = msg.clickedButton()
-    if clicked == geo_btn:
-        try:
-            import importSVG
-            importSVG.open(filepath)
-        except Exception as exc:
-            FreeCAD.Console.PrintWarning(
-                f"KM-FreeCAD: SVG geometry import failed: {exc}\n"
-            )
-    elif clicked == img_btn:
-        try:
-            import FreeCAD as _FC
-            doc = _FC.activeDocument() or _FC.newDocument()
-            import FreeCADGui
-            imageplane = doc.addObject("Image::ImagePlane", "ImagePlane")
-            imageplane.ImageFile = filepath
-            doc.recompute()
-            FreeCADGui.SendMsgToActiveView("ViewFit")
-        except Exception as exc:
-            FreeCAD.Console.PrintWarning(
-                f"KM-FreeCAD: SVG image import failed: {exc}\n"
-            )
+    Queries ``FreeCAD.getImportType()`` for registered importers.  If only one
+    exists the file is opened directly; if multiple exist a radio-button dialog
+    identical to FreeCAD's built-in 'Select Module' dialog is shown first.
+
+    Returns True when the user confirmed an import (or only one module was
+    available), False when the user cancelled.
+    """
+    ext = os.path.splitext(filepath)[1].lstrip(".").lower()
+
+    try:
+        modules = FreeCAD.getImportType(ext)
+    except Exception:
+        modules = []
+
+    if not modules:
+        FreeCAD.Console.PrintWarning(f"KM-FreeCAD: No importer registered for .{ext}\n")
+        return False
+
+    selected_module = modules[0]  # default when only one module
+
+    if len(modules) > 1:
+        # ---- Python replica of FreeCAD's C++ SelectModule dialog ----
+        dlg = QtWidgets.QDialog()
+        dlg.setWindowTitle("Select Module")
+        dlg.setWindowFlags(
+            dlg.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint
+        )
+
+        grid = QtWidgets.QGridLayout(dlg)
+        grid.setSpacing(6)
+        grid.setContentsMargins(9, 9, 9, 9)
+
+        group_box = QtWidgets.QGroupBox(f"Open .{ext} as")
+        grid.addWidget(group_box, 0, 0)
+        grid_inner = QtWidgets.QGridLayout(group_box)
+        grid_inner.setSpacing(6)
+        grid_inner.setContentsMargins(9, 9, 9, 9)
+
+        btn_group = QtWidgets.QButtonGroup(dlg)
+        for i, mod in enumerate(modules):
+            # Strip trailing "Gui" from module name (mirrors C++ SelectModule)
+            label = mod[:-3] if mod.endswith("Gui") else mod
+            rb = QtWidgets.QRadioButton(label)
+            rb.setObjectName(mod)
+            grid_inner.addWidget(rb, i, 0)
+            btn_group.addButton(rb, i)
+
+        grid.addItem(
+            QtWidgets.QSpacerItem(
+                20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding
+            ),
+            1, 0,
+        )
+
+        btn_box = QtWidgets.QDialogButtonBox(
+            QtWidgets.QDialogButtonBox.Open | QtWidgets.QDialogButtonBox.Cancel
+        )
+        open_btn = btn_box.button(QtWidgets.QDialogButtonBox.Open)
+        open_btn.setEnabled(False)
+        grid.addWidget(btn_box, 2, 0)
+
+        btn_box.accepted.connect(dlg.accept)
+        btn_box.rejected.connect(dlg.reject)
+
+        def _on_radio_toggled(checked, _open_btn=open_btn):
+            if checked:
+                _open_btn.setEnabled(True)
+
+        for rb in [grid_inner.itemAt(i).widget() for i in range(grid_inner.count())]:
+            if isinstance(rb, QtWidgets.QRadioButton):
+                rb.toggled.connect(_on_radio_toggled)
+
+        if dlg.exec_() != QtWidgets.QDialog.Accepted:
+            return False
+
+        checked_btn = btn_group.checkedButton()
+        if checked_btn is None:
+            return False
+        selected_module = checked_btn.objectName()
+
+    try:
+        FreeCAD.loadFile(filepath, "", selected_module)
+        return True
+    except Exception as exc:
+        FreeCAD.Console.PrintWarning(
+            f"KM-FreeCAD: Could not open '{os.path.basename(filepath)}' "
+            f"with {selected_module}: {exc}\n"
+        )
+        return False
 
 _THUMB_W = 150
 _THUMB_H = 120
@@ -131,9 +186,10 @@ def _thumbnail_pixmap(filepath):
 class _FileCard(QtWidgets.QFrame):
     """Clickable card showing a file thumbnail and its name."""
 
-    def __init__(self, filepath, parent=None):
+    def __init__(self, filepath, on_opened=None, parent=None):
         super().__init__(parent)
         self.filepath = filepath
+        self._on_opened = on_opened
 
         self.setFrameStyle(QtWidgets.QFrame.StyledPanel | QtWidgets.QFrame.Raised)
         self.setCursor(QtCore.Qt.PointingHandCursor)
@@ -194,22 +250,16 @@ class _FileCard(QtWidgets.QFrame):
             if ext == ".fcstd":
                 try:
                     FreeCAD.openDocument(self.filepath)
+                    if self._on_opened:
+                        self._on_opened()
                 except Exception as exc:
                     FreeCAD.Console.PrintWarning(
                         f"KM-FreeCAD StartPage: Could not open '{self.filepath}': {exc}\n"
                     )
             elif ext in _FREECAD_EXT:
-                if ext == ".svg":
-                    _open_svg_dialog(self.filepath)
-                else:
-                    # STEP / DXF — open directly via FreeCAD's registered importer
-                    try:
-                        import FreeCADGui
-                        FreeCADGui.open(self.filepath)
-                    except Exception as exc:
-                        FreeCAD.Console.PrintWarning(
-                            f"KM-FreeCAD StartPage: Could not open '{self.filepath}': {exc}\n"
-                        )
+                opened = _open_with_module_selector(self.filepath)
+                if opened and self._on_opened:
+                    self._on_opened()
             else:
                 QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.filepath))
         super().mousePressEvent(event)
@@ -227,7 +277,7 @@ class _FileCard(QtWidgets.QFrame):
 # Lesson row
 # ---------------------------------------------------------------------------
 
-def _build_lesson_widget(lesson_name, lesson_path):
+def _build_lesson_widget(lesson_name, lesson_path, on_file_opened=None):
     """Return a widget for one lesson, or None if there are no displayable files."""
     files = sorted(
         f for f in os.listdir(lesson_path)
@@ -259,7 +309,7 @@ def _build_lesson_widget(lesson_name, lesson_path):
     row_layout.setAlignment(QtCore.Qt.AlignLeft)
 
     for filename in files:
-        card = _FileCard(os.path.join(lesson_path, filename))
+        card = _FileCard(os.path.join(lesson_path, filename), on_opened=on_file_opened)
         row_layout.addWidget(card)
 
     row_layout.addStretch()
@@ -271,13 +321,13 @@ def _build_lesson_widget(lesson_name, lesson_path):
 # Class section
 # ---------------------------------------------------------------------------
 
-def _build_class_section(class_name, class_path):
+def _build_class_section(class_name, class_path, on_file_opened=None):
     """Return a QGroupBox for one class (no checkbox — always expanded)."""
     group = QtWidgets.QGroupBox(class_name)
     group.setStyleSheet(
         "QGroupBox {"
         "  font-size: 14px; font-weight: bold;"
-        "  border: 2px solid #c0392b;"
+        "  border: 2px solid #ff000;"
         "  border-radius: 6px;"
         "  margin-top: 18px;"
         "  padding-top: 10px;"
@@ -301,7 +351,9 @@ def _build_class_section(class_name, class_path):
 
     lesson_added = False
     for lesson_name in lessons:
-        lesson_widget = _build_lesson_widget(lesson_name, os.path.join(class_path, lesson_name))
+        lesson_widget = _build_lesson_widget(
+            lesson_name, os.path.join(class_path, lesson_name), on_file_opened
+        )
         if lesson_widget:
             group_layout.addWidget(lesson_widget)
             lesson_added = True
@@ -323,9 +375,10 @@ class StartPage(QtWidgets.QDialog):
         super().__init__(parent)
         self.setWindowTitle("Knox Makers – FreeCAD Classes")
         self.setWindowFlags(
-            self.windowFlags() & ~QtCore.Qt.WindowContextHelpButtonHint
+            QtCore.Qt.FramelessWindowHint | QtCore.Qt.Dialog
         )
         self.resize(980, 720)
+        self._drag_pos = None
         self._build_ui()
 
     # ------------------------------------------------------------------
@@ -334,10 +387,14 @@ class StartPage(QtWidgets.QDialog):
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
 
-        # ---- header bar ----
+        # ---- header bar (also acts as drag handle) ----
         header = QtWidgets.QWidget()
         header.setFixedHeight(56)
         header.setStyleSheet("background: #1a1a2e;")
+        header.setCursor(QtCore.Qt.SizeAllCursor)
+        header.mousePressEvent   = self._on_header_press
+        header.mouseMoveEvent    = self._on_header_move
+        header.mouseReleaseEvent = self._on_header_release
         h_layout = QtWidgets.QHBoxLayout(header)
         h_layout.setContentsMargins(16, 8, 16, 8)
         h_layout.setSpacing(12)
@@ -360,6 +417,17 @@ class StartPage(QtWidgets.QDialog):
         path_lbl = QtWidgets.QLabel(CLASSES_DIR)
         path_lbl.setStyleSheet("color: #aaaacc; font-size: 10px;")
         h_layout.addWidget(path_lbl)
+
+        # Close (×) button in the header
+        close_hdr_btn = QtWidgets.QPushButton("\u00d7")
+        close_hdr_btn.setFixedSize(32, 32)
+        close_hdr_btn.setStyleSheet(
+            "QPushButton { color: #ffffff; background: transparent;"
+            " border: none; font-size: 20px; font-weight: bold; }"
+            "QPushButton:hover { background: #c0392b; border-radius: 4px; }"
+        )
+        close_hdr_btn.clicked.connect(self.close)
+        h_layout.addWidget(close_hdr_btn)
 
         outer.addWidget(header)
 
@@ -397,7 +465,11 @@ class StartPage(QtWidgets.QDialog):
                 vbox.addStretch()
             else:
                 for class_name in classes:
-                    section = _build_class_section(class_name, os.path.join(CLASSES_DIR, class_name))
+                    section = _build_class_section(
+                        class_name,
+                        os.path.join(CLASSES_DIR, class_name),
+                        on_file_opened=self.close,
+                    )
                     vbox.addWidget(section)
                 vbox.addStretch()
 
@@ -407,9 +479,24 @@ class StartPage(QtWidgets.QDialog):
         btn_row.addStretch()
         close_btn = QtWidgets.QPushButton("Close")
         close_btn.setFixedWidth(90)
-        close_btn.clicked.connect(self.accept)
+        close_btn.clicked.connect(self.close)
         btn_row.addWidget(close_btn)
         outer.addLayout(btn_row)
+
+    # ------------------------------------------------------------------
+    # Drag support for frameless window
+    # ------------------------------------------------------------------
+
+    def _on_header_press(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._drag_pos = event.globalPos() - self.frameGeometry().topLeft()
+
+    def _on_header_move(self, event):
+        if event.buttons() == QtCore.Qt.LeftButton and self._drag_pos is not None:
+            self.move(event.globalPos() - self._drag_pos)
+
+    def _on_header_release(self, event):
+        self._drag_pos = None
 
 
 # ---------------------------------------------------------------------------

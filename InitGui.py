@@ -296,7 +296,47 @@ try:
         except Exception as _e:
             FreeCAD.Console.PrintWarning(f"KM-FreeCAD: Could not set up Knox Makers menu: {_e}\n")
 
-    QTimer.singleShot(1000, _show_start_page)
+    def _trigger_start_page(_show=_show_start_page):
+        """Show the start page once FreeCAD's first real workbench is active.
+
+        Connects to ``MainWindow.workbenchActivated`` so the page appears only
+        after FreeCAD has finished initialising.  Falls back to an immediate
+        call if a workbench is already active when this fires.
+        """
+        try:
+            import FreeCADGui
+            mw = FreeCADGui.getMainWindow()
+            if not mw:
+                _show()
+                return
+
+            # Check whether a real workbench is already active
+            try:
+                wb = FreeCADGui.activeWorkbench()
+                if wb and type(wb).__name__ not in ("NoneWorkbench",):
+                    _show()
+                    return
+            except Exception:
+                pass
+
+            # Connect to the workbenchActivated signal; disconnect after first fire
+            def _on_wb_activated(_name, _mw=mw, _show=_show):
+                try:
+                    _mw.workbenchActivated.disconnect(_on_wb_activated)
+                except Exception:
+                    pass
+                _show()
+
+            mw.workbenchActivated.connect(_on_wb_activated)
+        except Exception as _e:
+            FreeCAD.Console.PrintWarning(
+                f"KM-FreeCAD: Could not set workbench trigger for start page: {_e}\n"
+            )
+            _show()  # fallback: show anyway
+
+    # Small initial delay so the main window object is available, then wait
+    # for the first real workbench activation before showing the start page.
+    QTimer.singleShot(500, _trigger_start_page)
     QTimer.singleShot(1500, _setup_km_menu)
     QTimer.singleShot(2000, check_for_freecad_update)
     FreeCAD.Console.PrintLog("KM-FreeCAD: start page and cam+ update check scheduled.\n")
