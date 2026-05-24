@@ -327,7 +327,7 @@ def _build_class_section(class_name, class_path, on_file_opened=None):
     group.setStyleSheet(
         "QGroupBox {"
         "  font-size: 14px; font-weight: bold;"
-        "  border: 2px solid #ff000;"
+        "  border: 2px solid #ff0000;"
         "  border-radius: 6px;"
         "  margin-top: 18px;"
         "  padding-top: 10px;"
