@@ -273,7 +273,11 @@ try:
             icon = QtGui.QIcon(icon_path)
 
             # Action shared by menu and toolbar
-            action = QtWidgets.QAction(icon, "FreeCAD Classes…", mw)
+            # QAction is in QtGui in PySide1 (FreeCAD's shim), QtWidgets in PySide2
+            try:
+                action = QtWidgets.QAction(icon, "FreeCAD Classes\u2026", mw)
+            except AttributeError:
+                action = QtGui.QAction(icon, "FreeCAD Classes\u2026", mw)
             action.setToolTip("Open the Knox Makers FreeCAD class browser")
             action.triggered.connect(_show_start_page)
 
