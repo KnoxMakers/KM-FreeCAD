@@ -143,6 +143,7 @@ def _load_in_freecad(filepath, module):
     ext = os.path.splitext(filepath)[1].lstrip(".").lower()
     try:
         FreeCAD.loadFile(filepath, "", module)
+        _add_recent_file(filepath)
         if ext == "svg":
             try:
                 import FreeCADGui
@@ -154,6 +155,15 @@ def _load_in_freecad(filepath, module):
             f"KM-FreeCAD: Could not open '{os.path.basename(filepath)}' "
             f"with {module}: {exc}\n"
         )
+
+
+def _add_recent_file(filepath):
+    """Add *filepath* to FreeCAD's recently-opened files list."""
+    try:
+        import FreeCADGui
+        FreeCADGui.addRecentFile(filepath)
+    except Exception:
+        pass
 
 
 def _is_dark_theme():
@@ -338,6 +348,7 @@ class _FileCard(QtWidgets.QFrame):
                 def _open_fcstd(path=_path):
                     try:
                         FreeCAD.openDocument(path)
+                        _add_recent_file(path)
                     except Exception as exc:
                         FreeCAD.Console.PrintWarning(
                             f"KM-FreeCAD StartPage: Could not open '{path}': {exc}\n"
