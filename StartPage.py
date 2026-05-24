@@ -434,9 +434,20 @@ class StartPage(QtWidgets.QDialog):
         outer.setSpacing(0)
 
         # ---- header bar (also acts as drag handle) ----
+        if _is_dark_theme():
+            _hdr_bg       = "#1a1a2e"
+            _hdr_title    = "#ffffff"
+            _hdr_path     = "#aaaacc"
+            _hdr_btn_fg   = "#ffffff"
+        else:
+            _hdr_bg       = _palette_hex(QtGui.QPalette.Button)
+            _hdr_title    = _palette_hex(QtGui.QPalette.ButtonText)
+            _hdr_path     = _palette_hex(QtGui.QPalette.Mid)
+            _hdr_btn_fg   = _palette_hex(QtGui.QPalette.ButtonText)
+
         header = QtWidgets.QWidget()
         header.setFixedHeight(56)
-        header.setStyleSheet("background: #1a1a2e;")
+        header.setStyleSheet(f"background: {_hdr_bg};")
         header.setCursor(QtCore.Qt.SizeAllCursor)
         header.mousePressEvent   = self._on_header_press
         header.mouseMoveEvent    = self._on_header_move
@@ -456,21 +467,21 @@ class StartPage(QtWidgets.QDialog):
             h_layout.addWidget(logo_lbl)
 
         title_lbl = QtWidgets.QLabel("Knox Makers  ·  FreeCAD Classes")
-        title_lbl.setStyleSheet("color: #ffffff; font-size: 17px; font-weight: bold;")
+        title_lbl.setStyleSheet(f"color: {_hdr_title}; font-size: 17px; font-weight: bold;")
         h_layout.addWidget(title_lbl)
         h_layout.addStretch()
 
         path_lbl = QtWidgets.QLabel(CLASSES_DIR)
-        path_lbl.setStyleSheet("color: #aaaacc; font-size: 10px;")
+        path_lbl.setStyleSheet(f"color: {_hdr_path}; font-size: 10px;")
         h_layout.addWidget(path_lbl)
 
         # Close (×) button in the header
         close_hdr_btn = QtWidgets.QPushButton("\u00d7")
         close_hdr_btn.setFixedSize(32, 32)
         close_hdr_btn.setStyleSheet(
-            "QPushButton { color: #ffffff; background: transparent;"
+            f"QPushButton {{ color: {_hdr_btn_fg}; background: transparent;"
             " border: none; font-size: 20px; font-weight: bold; }"
-            "QPushButton:hover { background: #c0392b; border-radius: 4px; }"
+            "QPushButton:hover { background: #c0392b; color: #ffffff; border-radius: 4px; }"
         )
         close_hdr_btn.clicked.connect(self.close)
         h_layout.addWidget(close_hdr_btn)
