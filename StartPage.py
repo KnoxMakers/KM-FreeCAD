@@ -30,6 +30,18 @@ _SHOW_EXT = {".fcstd", ".svg", ".png", ".jpg", ".jpeg", ".step", ".stp", ".dxf",
 _FREECAD_EXT = {".fcstd", ".svg", ".step", ".stp", ".dxf"}
 
 
+_MODULE_LABELS = {
+    "FreeCAD":   "Image formats (FreeCAD)",
+    "importSVG": "SVG as geometry (importSVG)",
+}
+
+
+def _module_label(mod):
+    """Return a human-readable label for a FreeCAD importer module name."""
+    base = mod[:-3] if mod.endswith("Gui") else mod
+    return _MODULE_LABELS.get(base, base)
+
+
 def _open_with_module_selector(filepath):
     """Open *filepath* in FreeCAD, mirroring the C++ SelectModule dialog.
 
@@ -43,9 +55,18 @@ def _open_with_module_selector(filepath):
     ext = os.path.splitext(filepath)[1].lstrip(".").lower()
 
     try:
-        modules = FreeCAD.getImportType(ext)
+        raw_modules = FreeCAD.getImportType(ext)
     except Exception:
-        modules = []
+        raw_modules = []
+
+    # Deduplicate: drop "Gui" variants when the base module already appears
+    seen_bases = set()
+    modules = []
+    for mod in raw_modules:
+        base = mod[:-3] if mod.endswith("Gui") else mod
+        if base not in seen_bases:
+            seen_bases.add(base)
+            modules.append(mod)
 
     if not modules:
         FreeCAD.Console.PrintWarning(f"KM-FreeCAD: No importer registered for .{ext}\n")
@@ -65,7 +86,7 @@ def _open_with_module_selector(filepath):
         grid.setSpacing(6)
         grid.setContentsMargins(9, 9, 9, 9)
 
-        group_box = QtWidgets.QGroupBox(f"Open .{ext} as")
+        group_box = QtWidgets.QGroupBox(f"Open {ext} as")
         grid.addWidget(group_box, 0, 0)
         grid_inner = QtWidgets.QGridLayout(group_box)
         grid_inner.setSpacing(6)
@@ -73,9 +94,7 @@ def _open_with_module_selector(filepath):
 
         btn_group = QtWidgets.QButtonGroup(dlg)
         for i, mod in enumerate(modules):
-            # Strip trailing "Gui" from module name (mirrors C++ SelectModule)
-            label = mod[:-3] if mod.endswith("Gui") else mod
-            rb = QtWidgets.QRadioButton(label)
+            rb = QtWidgets.QRadioButton(_module_label(mod))
             rb.setObjectName(mod)
             grid_inner.addWidget(rb, i, 0)
             btn_group.addButton(rb, i)
@@ -324,15 +343,16 @@ def _build_lesson_widget(lesson_name, lesson_path, on_file_opened=None):
 def _build_class_section(class_name, class_path, on_file_opened=None):
     """Return a QGroupBox for one class (no checkbox — always expanded)."""
     group = QtWidgets.QGroupBox(class_name)
+    group.setObjectName("kmClassSection")
     group.setStyleSheet(
-        "QGroupBox {"
+        "QGroupBox#kmClassSection {"
         "  font-size: 14px; font-weight: bold;"
         "  border: 2px solid #ff0000;"
         "  border-radius: 6px;"
         "  margin-top: 18px;"
         "  padding-top: 10px;"
         "}"
-        "QGroupBox::title {"
+        "QGroupBox#kmClassSection::title {"
         "  subcontrol-origin: margin;"
         "  left: 14px;"
         "  color: #c0392b;"
