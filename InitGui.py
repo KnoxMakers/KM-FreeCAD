@@ -255,7 +255,7 @@ try:
         except Exception as _e:
             FreeCAD.Console.PrintWarning(f"KM-FreeCAD: Could not show start page: {_e}\n")
 
-    def _setup_km_menu(_dir=_addon_dir):
+    def _setup_km_menu(_dir=_addon_dir, _show=_show_start_page):
         """Add a Knox Makers menu and toolbar button to FreeCAD's main window."""
         try:
             import os
@@ -279,7 +279,7 @@ try:
             except AttributeError:
                 action = QtGui.QAction(icon, "FreeCAD Classes\u2026", mw)
             action.setToolTip("Open the Knox Makers FreeCAD class browser")
-            action.triggered.connect(_show_start_page)
+            action.triggered.connect(_show)
 
             # Menu
             km_menu = QtWidgets.QMenu("Knox Makers", mw)
