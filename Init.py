@@ -36,11 +36,11 @@ def get_metadata(addon_dir=addon_dir):
 
         url_elem = root.find("pkg:url[@type='repository']", ns)
         print(
-            f"Parsed package.xml: name={addon_name}, repo_url={url_elem.text if url_elem is not None else 'N/A'}, branch={url_elem.get('branch', 'main') if url_elem is not None else 'N/A'}"
+            f"Parsed package.xml: name={addon_name}, repo_url={url_elem.text if url_elem is not None else 'N/A'}, branch={url_elem.get('branch', 'dev') if url_elem is not None else 'N/A'}"
         )
         if url_elem is not None:
             repo_url = url_elem.text
-            branch = url_elem.get('branch', 'main')
+            branch = url_elem.get('branch', 'dev')
             print(
                 f"Parsed metadata from package.xml: name={addon_name}, repo_url={repo_url}, branch={branch}"
             )
