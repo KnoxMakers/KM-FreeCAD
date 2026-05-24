@@ -253,12 +253,12 @@ class _FileCard(QtWidgets.QFrame):
         self.setToolTip(filepath)
 
         if _is_dark_theme():
-            _card_bg      = "#2c2c42"
-            _card_border  = "#3d3d5e"
-            _thumb_bg     = "#1a1a2e"
-            _thumb_border = "#3d3d5e"
+            _card_bg      = "#2d2d2d"
+            _card_border  = "#4a4a4a"
+            _thumb_bg     = "#1e1e1e"
+            _thumb_border = "#4a4a4a"
             _text_color   = "#dddddd"
-            _badge_color  = "#888899"
+            _badge_color  = "#888888"
         else:
             _card_bg      = _palette_hex(QtGui.QPalette.Base)
             _card_border  = _palette_hex(QtGui.QPalette.Mid)
@@ -467,15 +467,15 @@ class StartPage(QtWidgets.QDialog):
 
         # ---- header bar (also acts as drag handle) ----
         if _is_dark_theme():
-            _hdr_bg     = "#1a1a2e"
+            _hdr_bg     = "#2d2d2d"
             _hdr_title  = "#ffffff"
-            _hdr_path   = "#aaaacc"
+            _hdr_path   = "#aaaaaa"
             _hdr_btn_fg = "#ffffff"
         else:
             _hdr_bg     = "#e8e8e8"
-            _hdr_title  = "#1a1a2e"
+            _hdr_title  = "#1e1e1e"
             _hdr_path   = "#555555"
-            _hdr_btn_fg = "#1a1a2e"
+            _hdr_btn_fg = "#1e1e1e"
 
         header = QtWidgets.QWidget()
         header.setFixedHeight(56)
