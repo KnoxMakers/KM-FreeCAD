@@ -451,7 +451,7 @@ class StartPage(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Knox Makers – FreeCAD Classes")
+        self.setWindowTitle("Knox Makers - Start Page")
         self.setWindowFlags(
             QtCore.Qt.FramelessWindowHint | QtCore.Qt.Dialog
         )
