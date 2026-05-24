@@ -255,7 +255,44 @@ try:
         except Exception as _e:
             FreeCAD.Console.PrintWarning(f"KM-FreeCAD: Could not show start page: {_e}\n")
 
+    def _setup_km_menu():
+        """Add a Knox Makers menu and toolbar button to FreeCAD's main window."""
+        try:
+            import FreeCADGui
+            from PySide import QtWidgets, QtGui
+
+            mw = FreeCADGui.getMainWindow()
+
+            # Avoid adding twice if this fires more than once
+            for _a in mw.menuBar().actions():
+                if _a.text() == "Knox Makers":
+                    return
+
+            icon_path = _os.path.join(_addon_dir, "icons", "KnoxMakers.svg")
+            icon = QtGui.QIcon(icon_path)
+
+            # Action shared by menu and toolbar
+            action = QtWidgets.QAction(icon, "FreeCAD Classes…", mw)
+            action.setToolTip("Open the Knox Makers FreeCAD class browser")
+            action.triggered.connect(_show_start_page)
+
+            # Menu
+            km_menu = QtWidgets.QMenu("Knox Makers", mw)
+            km_menu.addAction(action)
+            mw.menuBar().addMenu(km_menu)
+
+            # Toolbar
+            tb = QtWidgets.QToolBar("Knox Makers", mw)
+            tb.setObjectName("KnoxMakersToolBar")
+            tb.addAction(action)
+            mw.addToolBar(tb)
+
+            FreeCAD.Console.PrintLog("KM-FreeCAD: Knox Makers menu and toolbar added.\n")
+        except Exception as _e:
+            FreeCAD.Console.PrintWarning(f"KM-FreeCAD: Could not set up Knox Makers menu: {_e}\n")
+
     QTimer.singleShot(1000, _show_start_page)
+    QTimer.singleShot(1500, _setup_km_menu)
     QTimer.singleShot(2000, check_for_freecad_update)
     FreeCAD.Console.PrintLog("KM-FreeCAD: start page and cam+ update check scheduled.\n")
 

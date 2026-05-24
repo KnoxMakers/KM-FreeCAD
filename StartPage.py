@@ -26,12 +26,26 @@ CLASSES_DIR = os.path.join(os.path.expanduser("~"), "Documents", "FreeCAD", "Cla
 # Extensions that are shown as cards (backups are excluded)
 _SHOW_EXT = {".fcstd", ".svg", ".png", ".jpg", ".jpeg", ".step", ".stp", ".dxf", ".pdf"}
 
+# Extensions that should be opened inside FreeCAD rather than the OS viewer
+_FREECAD_EXT = {".fcstd", ".svg", ".step", ".stp", ".dxf"}
+
 _THUMB_W = 150
 _THUMB_H = 120
 _CARD_W  = 170
 
 # Addon directory (used to locate icon assets)
 _ADDON_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def _is_dark_theme():
+    """Return True when the application palette has a dark window background."""
+    pal = QtWidgets.QApplication.palette()
+    return pal.color(QtGui.QPalette.Window).lightness() < 128
+
+
+def _palette_hex(role):
+    """Return the current palette colour for *role* as a '#rrggbb' string."""
+    return QtWidgets.QApplication.palette().color(role).name()
 
 
 # ---------------------------------------------------------------------------
@@ -86,9 +100,14 @@ class _FileCard(QtWidgets.QFrame):
         self.setCursor(QtCore.Qt.PointingHandCursor)
         self.setFixedWidth(_CARD_W)
         self.setToolTip(filepath)
+
+        # Adapt card colours to the active theme
+        base   = _palette_hex(QtGui.QPalette.Base)
+        border = _palette_hex(QtGui.QPalette.Mid)
+        hi     = _palette_hex(QtGui.QPalette.Highlight)
         self.setStyleSheet(
-            "_FileCard { background: #f9f9f9; border-radius: 4px; }"
-            "_FileCard:hover { background: #e8f4fd; border: 1px solid #3498db; }"
+            f"_FileCard {{ background: {base}; border-radius: 4px; }}"
+            f"_FileCard:hover {{ border: 1px solid {hi}; }}"
         )
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -99,7 +118,9 @@ class _FileCard(QtWidgets.QFrame):
         thumb = QtWidgets.QLabel()
         thumb.setAlignment(QtCore.Qt.AlignCenter)
         thumb.setFixedSize(_THUMB_W, _THUMB_H)
-        thumb.setStyleSheet("border: 1px solid #ccc; background: #efefef; border-radius: 3px;")
+        border = _palette_hex(QtGui.QPalette.Mid)
+        base   = _palette_hex(QtGui.QPalette.Base)
+        thumb.setStyleSheet(f"border: 1px solid {border}; background: {base}; border-radius: 3px;")
 
         pix = _thumbnail_pixmap(filepath)
         if pix:
@@ -116,16 +137,15 @@ class _FileCard(QtWidgets.QFrame):
         lbl.setAlignment(QtCore.Qt.AlignCenter)
         lbl.setWordWrap(True)
         lbl.setFixedWidth(_CARD_W - 12)
-        lbl.setStyleSheet("font-size: 11px; color: #333;")
+        lbl.setStyleSheet("font-size: 11px;")
         layout.addWidget(lbl)
 
         # ---- file-type badge ----
+        dim = _palette_hex(QtGui.QPalette.Dark) if _is_dark_theme() else _palette_hex(QtGui.QPalette.Mid)
         ext_badge = QtWidgets.QLabel(os.path.splitext(filepath)[1].upper().lstrip("."))
         ext_badge.setAlignment(QtCore.Qt.AlignCenter)
         ext_badge.setFixedWidth(_CARD_W - 12)
-        ext_badge.setStyleSheet(
-            "font-size: 9px; color: #666; font-style: italic;"
-        )
+        ext_badge.setStyleSheet(f"font-size: 9px; color: {dim}; font-style: italic;")
         layout.addWidget(ext_badge)
 
     # ------------------------------------------------------------------
@@ -135,6 +155,15 @@ class _FileCard(QtWidgets.QFrame):
             if ext == ".fcstd":
                 try:
                     FreeCAD.openDocument(self.filepath)
+                except Exception as exc:
+                    FreeCAD.Console.PrintWarning(
+                        f"KM-FreeCAD StartPage: Could not open '{self.filepath}': {exc}\n"
+                    )
+            elif ext in _FREECAD_EXT:
+                # Open SVG / STEP / DXF inside FreeCAD using the registered importer
+                try:
+                    import FreeCADGui
+                    FreeCADGui.open(self.filepath)
                 except Exception as exc:
                     FreeCAD.Console.PrintWarning(
                         f"KM-FreeCAD StartPage: Could not open '{self.filepath}': {exc}\n"
@@ -175,9 +204,9 @@ def _build_lesson_widget(lesson_name, lesson_path):
     vbox.setSpacing(6)
 
     lbl = QtWidgets.QLabel(lesson_name)
+    sep = _palette_hex(QtGui.QPalette.Mid)
     lbl.setStyleSheet(
-        "font-size: 12px; font-weight: bold; color: #555; "
-        "border-bottom: 1px solid #ddd; padding-bottom: 2px;"
+        f"font-size: 12px; font-weight: bold; border-bottom: 1px solid {sep}; padding-bottom: 2px;"
     )
     vbox.addWidget(lbl)
 
@@ -201,10 +230,8 @@ def _build_lesson_widget(lesson_name, lesson_path):
 # ---------------------------------------------------------------------------
 
 def _build_class_section(class_name, class_path):
-    """Return a collapsible QGroupBox for one class."""
+    """Return a QGroupBox for one class (no checkbox — always expanded)."""
     group = QtWidgets.QGroupBox(class_name)
-    group.setCheckable(True)
-    group.setChecked(True)
     group.setStyleSheet(
         "QGroupBox {"
         "  font-size: 14px; font-weight: bold;"
@@ -219,17 +246,11 @@ def _build_class_section(class_name, class_path):
         "  color: #c0392b;"
         "  padding: 0 4px;"
         "}"
-        "QGroupBox::indicator { width: 14px; height: 14px; }"
     )
 
-    inner = QtWidgets.QWidget()
     group_layout = QtWidgets.QVBoxLayout(group)
     group_layout.setSpacing(4)
     group_layout.setContentsMargins(4, 4, 4, 8)
-
-    inner_layout = QtWidgets.QVBoxLayout(inner)
-    inner_layout.setContentsMargins(0, 0, 0, 0)
-    inner_layout.setSpacing(4)
 
     lessons = sorted(
         d for d in os.listdir(class_path)
@@ -240,16 +261,11 @@ def _build_class_section(class_name, class_path):
     for lesson_name in lessons:
         lesson_widget = _build_lesson_widget(lesson_name, os.path.join(class_path, lesson_name))
         if lesson_widget:
-            inner_layout.addWidget(lesson_widget)
+            group_layout.addWidget(lesson_widget)
             lesson_added = True
 
     if not lesson_added:
-        inner_layout.addWidget(QtWidgets.QLabel("  (no files found)"))
-
-    group_layout.addWidget(inner)
-
-    # Toggle visibility of inner widget when the checkbox is clicked
-    group.toggled.connect(inner.setVisible)
+        group_layout.addWidget(QtWidgets.QLabel("  (no files found)"))
 
     return group
 
@@ -309,11 +325,9 @@ class StartPage(QtWidgets.QDialog):
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QtWidgets.QFrame.NoFrame)
-        scroll.setStyleSheet("QScrollArea { background: #f0f0f0; }")
         outer.addWidget(scroll)
 
         container = QtWidgets.QWidget()
-        container.setStyleSheet("background: #f0f0f0;")
         scroll.setWidget(container)
 
         vbox = QtWidgets.QVBoxLayout(container)
@@ -327,7 +341,7 @@ class StartPage(QtWidgets.QDialog):
                 "Run the Knox Makers addon installer to set up your class files."
             )
             msg.setTextFormat(QtCore.Qt.RichText)
-            msg.setStyleSheet("padding: 20px; background: white; border-radius: 6px;")
+            msg.setStyleSheet("padding: 20px; border-radius: 6px;")
             vbox.addWidget(msg)
             vbox.addStretch()
         else:
@@ -345,18 +359,15 @@ class StartPage(QtWidgets.QDialog):
                     vbox.addWidget(section)
                 vbox.addStretch()
 
-        # ---- footer / close button ----
-        footer = QtWidgets.QWidget()
-        footer.setFixedHeight(44)
-        footer.setStyleSheet("background: #e8e8e8; border-top: 1px solid #ccc;")
-        f_layout = QtWidgets.QHBoxLayout(footer)
-        f_layout.setContentsMargins(16, 4, 16, 4)
-        f_layout.addStretch()
+        # ---- close button row ----
+        btn_row = QtWidgets.QHBoxLayout()
+        btn_row.setContentsMargins(8, 4, 8, 8)
+        btn_row.addStretch()
         close_btn = QtWidgets.QPushButton("Close")
         close_btn.setFixedWidth(90)
         close_btn.clicked.connect(self.accept)
-        f_layout.addWidget(close_btn)
-        outer.addWidget(footer)
+        btn_row.addWidget(close_btn)
+        outer.addLayout(btn_row)
 
 
 # ---------------------------------------------------------------------------
