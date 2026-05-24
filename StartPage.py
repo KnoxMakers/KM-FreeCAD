@@ -60,8 +60,6 @@ def _open_with_module_selector(filepath):
         raw_modules = []
 
     # Deduplicate: drop "Gui" variants when the base module already appears.
-    # Preserve the order returned by getImportType — that matches FreeCAD's
-    # own SelectModule dialog order.
     seen_bases = set()
     modules = []
     for mod in raw_modules:
@@ -69,6 +67,9 @@ def _open_with_module_selector(filepath):
         if base not in seen_bases:
             seen_bases.add(base)
             modules.append(mod)
+    # getImportType returns importSVG before FreeCAD, which is the reverse of
+    # FreeCAD's own SelectModule dialog. Flip to match.
+    modules.reverse()
 
     if not modules:
         FreeCAD.Console.PrintWarning(f"KM-FreeCAD: No importer registered for .{ext}\n")
