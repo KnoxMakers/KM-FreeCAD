@@ -238,8 +238,11 @@ def check_for_freecad_update(
 try:
     import sys as _sys
     import os as _os
+    import inspect as _inspect
 
-    _addon_dir = _os.path.dirname(_os.path.abspath(__file__))
+    # InitGui.py is exec()'d by FreeCAD, so __file__ is not defined.
+    # Use inspect to resolve the actual path from the current frame's code object.
+    _addon_dir = _os.path.dirname(_os.path.abspath(_inspect.getfile(_inspect.currentframe())))
     if _addon_dir not in _sys.path:
         _sys.path.insert(0, _addon_dir)
 
