@@ -212,7 +212,7 @@ def _get_theme_colors():
             thumb_border = "#4a4a4a",
             text         = "#dddddd",
             badge        = "#888888",
-            hdr_bg       = "#2d2d2d",
+            hdr_bg       = "#202020",
             hdr_title    = "#ffffff",
             hdr_path     = "#aaaaaa",
             hdr_btn_fg   = "#ffffff",
