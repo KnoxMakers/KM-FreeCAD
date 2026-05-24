@@ -166,11 +166,11 @@ def _is_dark_theme():
     """
     # 1. FreeCAD preference — most reliable
     try:
-        ss = FreeCAD.ParamGet(
+        theme = FreeCAD.ParamGet(
             "User parameter:BaseApp/Preferences/MainWindow"
-        ).GetString("StyleSheet", "")
-        if ss:
-            return "dark" in ss.lower()
+        ).GetString("Theme", "")
+        if theme:
+            return "dark" in theme.lower()
     except Exception:
         pass
 
