@@ -269,14 +269,17 @@ class _FileCard(QtWidgets.QFrame):
         if event.button() == QtCore.Qt.LeftButton:
             ext = os.path.splitext(self.filepath)[1].lower()
             if ext == ".fcstd":
-                try:
-                    FreeCAD.openDocument(self.filepath)
-                    if self._on_opened:
-                        self._on_opened()
-                except Exception as exc:
-                    FreeCAD.Console.PrintWarning(
-                        f"KM-FreeCAD StartPage: Could not open '{self.filepath}': {exc}\n"
-                    )
+                _path = self.filepath
+                if self._on_opened:
+                    self._on_opened()
+                def _open_fcstd(path=_path):
+                    try:
+                        FreeCAD.openDocument(path)
+                    except Exception as exc:
+                        FreeCAD.Console.PrintWarning(
+                            f"KM-FreeCAD StartPage: Could not open '{path}': {exc}\n"
+                        )
+                QtCore.QTimer.singleShot(0, _open_fcstd)
             elif ext in _FREECAD_EXT:
                 opened = _open_with_module_selector(self.filepath)
                 if opened and self._on_opened:
