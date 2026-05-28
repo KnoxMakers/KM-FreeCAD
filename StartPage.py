@@ -236,17 +236,15 @@ def _get_theme_colors():
 # ---------------------------------------------------------------------------
 
 def _apply_theme(name):
-    """Apply a FreeCAD preference pack theme by name (e.g. 'FreeCAD Dark')."""
+    """Apply a FreeCAD theme by name (e.g. 'FreeCAD Dark') immediately."""
+    FreeCAD.ParamGet(
+        "User parameter:BaseApp/Preferences/MainWindow"
+    ).SetString("StyleSheet", f"{name}.qss")
     try:
-        mgr = FreeCADGui.Application.Instance.prefPackManager()
-        mgr.apply(name)
+        FreeCADGui.reloadStyleSheet()
     except Exception:
-        # Fallback: set stylesheet parameter directly
-        FreeCAD.ParamGet(
-            "User parameter:BaseApp/Preferences/MainWindow"
-        ).SetString("StyleSheet", f"{name}.qss")
         FreeCAD.Console.PrintWarning(
-            "KM-FreeCAD: Theme change may require a restart to fully apply.\n"
+            "KM-FreeCAD: Could not reload style sheet. A restart may be required.\n"
         )
 
 
