@@ -610,12 +610,12 @@ class StartPage(QtWidgets.QDialog):
         vbox.setContentsMargins(16, 24, 16, 16)
 
         # ---- theme selector ----
-        vbox.addWidget(_build_theme_selector())
+        # vbox.addWidget(_build_theme_selector())
 
-        sep = QtWidgets.QFrame()
-        sep.setFrameShape(QtWidgets.QFrame.HLine)
-        sep.setStyleSheet(f"background: {tc['card_border']}; max-height: 1px;")
-        vbox.addWidget(sep)
+        # sep = QtWidgets.QFrame()
+        # sep.setFrameShape(QtWidgets.QFrame.HLine)
+        # sep.setStyleSheet(f"background: {tc['card_border']}; max-height: 1px;")
+        # vbox.addWidget(sep)
 
         if not os.path.isdir(CLASSES_DIR):
             msg = QtWidgets.QLabel(
