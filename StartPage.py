@@ -239,7 +239,6 @@ def _apply_theme(name):
     """Apply a FreeCAD theme by name (e.g. 'FreeCAD Dark') immediately."""
     theme = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/MainWindow")
     theme.SetString("Theme", name)
-    FreeCADGui.runCommand("Std_ReloadStyleSheet")
     FreeCADGui.updateGui()
 
 
