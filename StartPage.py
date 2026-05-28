@@ -237,32 +237,8 @@ def _get_theme_colors():
 
 def _apply_theme(name):
     """Apply a FreeCAD theme by name (e.g. 'FreeCAD Dark') immediately."""
-    mw = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/MainWindow")
-    bmp = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Bitmaps/Theme")
-
-    mw.SetString("StyleSheet", f"{name}.qss")
-    qtstyle = mw.GetString("QtStyle", "")
-    theme_name = bmp.GetString("Name", "")
-    theme_path = bmp.GetString("SearchPath", "")
-    stylesheet = mw.GetString("StyleSheet", "")
-    tiled = mw.GetBool("TiledBackground", False)
-
-    app = QtGui.QApplication.instance()
-    if app:
-        if qtstyle:
-            style = QtGui.QStyleFactory.create(qtstyle)
-            if style:
-                app.setStyle(style)
-
-        if theme_path:
-            paths = QtGui.QIcon.themeSearchPaths()
-            if theme_path not in paths:
-                paths.insert(0, theme_path)
-                QtGui.QIcon.setThemeSearchPaths(paths)
-
-        if theme_name:
-            QtGui.QIcon.setThemeName(theme_name)
-
+    theme = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/MainWindow")
+    theme.SetString("Theme", name)
     FreeCADGui.runCommand("Std_ReloadStyleSheet")
     FreeCADGui.updateGui()
 
@@ -272,7 +248,7 @@ def _build_theme_selector():
     tc = _get_theme_colors()
     stylesheet = FreeCAD.ParamGet(
         "User parameter:BaseApp/Preferences/MainWindow"
-    ).GetString("StyleSheet", "")
+    ).GetString("Theme", "")
 
     widget = QtWidgets.QWidget()
     outer = QtWidgets.QVBoxLayout(widget)
