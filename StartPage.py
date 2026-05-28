@@ -244,7 +244,7 @@ def _apply_theme(name):
     if app:
         app.setStyleSheet(app.styleSheet())
     #try:
-    FreeCADGui.reloadStyleSheet()
+    #FreeCADGui.reloadStyleSheet()
     # except Exception:
     #     FreeCAD.Console.PrintWarning(
     #         "KM-FreeCAD: Could not reload style sheet. A restart may be required.\n"
