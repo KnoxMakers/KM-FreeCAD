@@ -240,12 +240,15 @@ def _apply_theme(name):
     FreeCAD.ParamGet(
         "User parameter:BaseApp/Preferences/MainWindow"
     ).SetString("StyleSheet", f"{name}.qss")
-    try:
-        FreeCADGui.reloadStyleSheet()
-    except Exception:
-        FreeCAD.Console.PrintWarning(
-            "KM-FreeCAD: Could not reload style sheet. A restart may be required.\n"
-        )
+    app = QtWidgets.QApplication.instance()
+    if app:
+        app.setStyleSheet(app.styleSheet())
+    #try:
+    FreeCADGui.reloadStyleSheet()
+    # except Exception:
+    #     FreeCAD.Console.PrintWarning(
+    #         "KM-FreeCAD: Could not reload style sheet. A restart may be required.\n"
+    #     )
 
 
 def _build_theme_selector():
