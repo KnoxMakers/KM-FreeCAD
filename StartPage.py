@@ -240,9 +240,7 @@ def _apply_theme(name):
     FreeCAD.ParamGet(
         "User parameter:BaseApp/Preferences/MainWindow"
     ).SetString("StyleSheet", f"{name}.qss")
-    app = QtWidgets.QApplication.instance()
-    if app:
-        app.setStyleSheet(app.styleSheet())
+    FreeCADGui.runCommand("Std_ReloadStyleSheet")
     #try:
     #FreeCADGui.reloadStyleSheet()
     # except Exception:
