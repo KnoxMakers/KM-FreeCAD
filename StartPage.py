@@ -15,6 +15,7 @@ import os
 import zipfile
 
 import FreeCAD
+import FreeCADGui
 from PySide import QtCore, QtGui, QtWidgets
 
 # ---------------------------------------------------------------------------
@@ -145,7 +146,6 @@ def _load_in_freecad(filepath, module):
         FreeCAD.loadFile(filepath, "", module)
         if ext == "svg":
             try:
-                import FreeCADGui
                 FreeCADGui.SendMsgToActiveView("ViewFit")
             except Exception:
                 pass
@@ -177,7 +177,6 @@ def _is_dark_theme():
 
     # 2. Main window widget palette
     try:
-        import FreeCADGui
         mw = FreeCADGui.getMainWindow()
         bg = mw.palette().color(mw.backgroundRole())
         return bg.lightness() < 128
@@ -230,6 +229,82 @@ def _get_theme_colors():
         hdr_path     = "#555555",
         hdr_btn_fg   = "#1e1e1e",
     )
+
+
+# ---------------------------------------------------------------------------
+# Theme selector
+# ---------------------------------------------------------------------------
+
+def _apply_theme(name):
+    """Apply a FreeCAD preference pack theme by name (e.g. 'FreeCAD Dark')."""
+    try:
+        mgr = FreeCADGui.Application.Instance.prefPackManager()
+        mgr.apply(name)
+    except Exception:
+        # Fallback: set stylesheet parameter directly
+        FreeCAD.ParamGet(
+            "User parameter:BaseApp/Preferences/MainWindow"
+        ).SetString("StyleSheet", f"{name}.qss")
+        FreeCAD.Console.PrintWarning(
+            "KM-FreeCAD: Theme change may require a restart to fully apply.\n"
+        )
+
+
+def _build_theme_selector():
+    """Return a widget mirroring FreeCAD's ThemeSelectorWidget using built-in Qt resources."""
+    tc = _get_theme_colors()
+    stylesheet = FreeCAD.ParamGet(
+        "User parameter:BaseApp/Preferences/MainWindow"
+    ).GetString("StyleSheet", "")
+
+    widget = QtWidgets.QWidget()
+    outer = QtWidgets.QVBoxLayout(widget)
+    outer.setContentsMargins(0, 0, 0, 8)
+    outer.setSpacing(8)
+
+    title = QtWidgets.QLabel("<h2>Theme</h2>")
+    title.setStyleSheet(f"color: {tc['text']};")
+    outer.addWidget(title)
+
+    btn_row = QtWidgets.QHBoxLayout()
+    btn_row.setAlignment(QtCore.Qt.AlignLeft)
+    btn_row.setSpacing(16)
+
+    themes = [
+        ("FreeCAD Light", ":/thumbnails/Theme_thumbnail_light.png"),
+        ("FreeCAD Dark",  ":/thumbnails/Theme_thumbnail_dark.png"),
+    ]
+
+    # keep a reference so Qt doesn't GC the button group
+    widget._btn_group = QtWidgets.QButtonGroup(widget)
+    widget._btn_group.setExclusive(True)
+
+    for label, resource in themes:
+        btn = QtWidgets.QToolButton()
+        btn.setCheckable(True)
+        btn.setAutoExclusive(True)
+        btn.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
+        btn.setText(label)
+        icon = QtGui.QIcon(resource)
+        btn.setIcon(icon)
+        btn.setIconSize(icon.actualSize(QtCore.QSize(220, 150)))
+        btn.setStyleSheet(
+            f"QToolButton {{ color: {tc['text']}; border: 2px solid transparent;"
+            " border-radius: 6px; padding: 4px; }"
+            f"QToolButton:checked {{ border: 2px solid {tc['accent']}; }}"
+            f"QToolButton:hover {{ border: 2px solid {tc['card_border']}; }}"
+        )
+
+        if label.lower() in stylesheet.lower():
+            btn.setChecked(True)
+
+        btn.clicked.connect(lambda checked, n=label: _apply_theme(n) if checked else None)
+        widget._btn_group.addButton(btn)
+        btn_row.addWidget(btn)
+
+    btn_row.addStretch()
+    outer.addLayout(btn_row)
+    return widget
 
 
 # ---------------------------------------------------------------------------
@@ -542,6 +617,14 @@ class StartPage(QtWidgets.QDialog):
         vbox.setSpacing(24)
         vbox.setContentsMargins(16, 24, 16, 16)
 
+        # ---- theme selector ----
+        vbox.addWidget(_build_theme_selector())
+
+        sep = QtWidgets.QFrame()
+        sep.setFrameShape(QtWidgets.QFrame.HLine)
+        sep.setStyleSheet(f"background: {tc['card_border']}; max-height: 1px;")
+        vbox.addWidget(sep)
+
         if not os.path.isdir(CLASSES_DIR):
             msg = QtWidgets.QLabel(
                 f"<b>Classes directory not found:</b><br>"
@@ -604,7 +687,6 @@ class StartPage(QtWidgets.QDialog):
 def show_start_page():
     """Create and show the StartPage dialog attached to FreeCAD's main window."""
     try:
-        import FreeCADGui
         mw = FreeCADGui.getMainWindow()
         page = StartPage(mw)
         try:
