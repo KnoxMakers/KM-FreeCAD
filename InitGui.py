@@ -232,14 +232,114 @@ def check_for_freecad_update(
 
 
 # ---------------------------------------------------------------------------
-# Schedule the check to run 2 seconds after the GUI finishes loading.
+# Schedule the start page and update check after the GUI finishes loading.
 # Using QTimer.singleShot keeps startup fast and avoids blocking the main thread.
 # ---------------------------------------------------------------------------
 try:
+    import sys as _sys
+    import os as _os
+    import inspect as _inspect
+
+    # InitGui.py is exec()'d by FreeCAD, so __file__ is not defined.
+    # Use inspect to resolve the actual path from the current frame's code object.
+    _addon_dir = _os.path.dirname(_os.path.abspath(_inspect.getfile(_inspect.currentframe())))
+    if _addon_dir not in _sys.path:
+        _sys.path.insert(0, _addon_dir)
+
     from PySide.QtCore import QTimer
 
+    def _show_start_page():
+        try:
+            from StartPage import show_start_page
+            show_start_page()
+        except Exception as _e:
+            FreeCAD.Console.PrintWarning(f"KM-FreeCAD: Could not show start page: {_e}\n")
+
+    def _setup_km_menu(_dir=_addon_dir, _show=_show_start_page):
+        """Add a Knox Makers menu and toolbar button to FreeCAD's main window."""
+        try:
+            import os
+            import FreeCADGui
+            from PySide import QtWidgets, QtGui
+
+            mw = FreeCADGui.getMainWindow()
+
+            # Avoid adding twice if this fires more than once
+            for _a in mw.menuBar().actions():
+                if _a.text() == "Knox Makers":
+                    return
+
+            icon_path = os.path.join(_dir, "icons", "KnoxMakers.svg")
+            icon = QtGui.QIcon(icon_path)
+
+            # Action shared by menu and toolbar
+            # QAction is in QtGui in PySide1 (FreeCAD's shim), QtWidgets in PySide2
+            try:
+                action = QtWidgets.QAction(icon, "FreeCAD Classes\u2026", mw)
+            except AttributeError:
+                action = QtGui.QAction(icon, "FreeCAD Classes\u2026", mw)
+            action.setToolTip("Open the Knox Makers FreeCAD class browser")
+            action.triggered.connect(_show)
+
+            # Menu
+            km_menu = QtWidgets.QMenu("Knox Makers", mw)
+            km_menu.addAction(action)
+            mw.menuBar().addMenu(km_menu)
+
+            # Toolbar
+            tb = QtWidgets.QToolBar("Knox Makers", mw)
+            tb.setObjectName("KnoxMakersToolBar")
+            tb.addAction(action)
+            mw.addToolBar(tb)
+
+            FreeCAD.Console.PrintLog("KM-FreeCAD: Knox Makers menu and toolbar added.\n")
+        except Exception as _e:
+            FreeCAD.Console.PrintWarning(f"KM-FreeCAD: Could not set up Knox Makers menu: {_e}\n")
+
+    def _trigger_start_page(_show=_show_start_page):
+        """Show the start page once FreeCAD's first real workbench is active.
+
+        Connects to ``MainWindow.workbenchActivated`` so the page appears only
+        after FreeCAD has finished initialising.  Falls back to an immediate
+        call if a workbench is already active when this fires.
+        """
+        try:
+            import FreeCADGui
+            mw = FreeCADGui.getMainWindow()
+            if not mw:
+                _show()
+                return
+
+            # Check whether a real workbench is already active
+            try:
+                wb = FreeCADGui.activeWorkbench()
+                if wb and type(wb).__name__ not in ("NoneWorkbench",):
+                    _show()
+                    return
+            except Exception:
+                pass
+
+            # Connect to the workbenchActivated signal; disconnect after first fire
+            def _on_wb_activated(_name, _mw=mw, _show=_show):
+                try:
+                    _mw.workbenchActivated.disconnect(_on_wb_activated)
+                except Exception:
+                    pass
+                _show()
+
+            mw.workbenchActivated.connect(_on_wb_activated)
+        except Exception as _e:
+            FreeCAD.Console.PrintWarning(
+                f"KM-FreeCAD: Could not set workbench trigger for start page: {_e}\n"
+            )
+            _show()  # fallback: show anyway
+
+    # Small initial delay so the main window object is available, then wait
+    # for the first real workbench activation before showing the start page.
+    # QTimer.singleShot(500, _trigger_start_page)
+    QTimer.singleShot(1500, _setup_km_menu)
     QTimer.singleShot(2000, check_for_freecad_update)
-    FreeCAD.Console.PrintLog("KM-FreeCAD: cam+ update check scheduled.\n")
+    FreeCAD.Console.PrintLog("KM-FreeCAD: start page and cam+ update check scheduled.\n")
 
 except Exception as e:
-    FreeCAD.Console.PrintWarning(f"KM-FreeCAD: Could not schedule update check: {e}\n")
+    FreeCAD.Console.PrintWarning(f"KM-FreeCAD: Could not schedule startup tasks: {e}\n")
