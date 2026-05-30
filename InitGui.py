@@ -249,7 +249,6 @@ try:
     from PySide.QtCore import QTimer
 
     def _show_start_page():
-        return
         try:
             from StartPage import show_start_page
             show_start_page()
@@ -337,7 +336,7 @@ try:
 
     # Small initial delay so the main window object is available, then wait
     # for the first real workbench activation before showing the start page.
-    QTimer.singleShot(500, _trigger_start_page)
+    # QTimer.singleShot(500, _trigger_start_page)
     QTimer.singleShot(1500, _setup_km_menu)
     QTimer.singleShot(2000, check_for_freecad_update)
     FreeCAD.Console.PrintLog("KM-FreeCAD: start page and cam+ update check scheduled.\n")
