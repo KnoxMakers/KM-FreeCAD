@@ -249,6 +249,7 @@ try:
     from PySide.QtCore import QTimer
 
     def _show_start_page():
+        return
         try:
             from StartPage import show_start_page
             show_start_page()
