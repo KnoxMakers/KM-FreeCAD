@@ -101,13 +101,16 @@ else:
 
     if source_ver:
         source_tools_base = os.path.join("CAMAssets", source_ver, "Tools")
-        if source_ver != version_string:
-            print(f"FreeCAD {version_string}: using source from: {source_tools_base}")
-        elif source_version_override:
-            print(f"Using source files from: {source_tools_base}")
     else:
         # No versioned source found — fall back to legacy root Tools/ (1.0 layout)
         source_tools_base = "Tools"
+
+    _source_abs = os.path.join(os.path.dirname(__file__), source_tools_base)
+    print(f"Using source Tools directory: {_source_abs}")
+    if source_version_override and source_version_override != version_string:
+        print(f"  (CAM+ override: {version_string} -> {source_ver})")
+    elif source_ver and source_ver != version_string:
+        print(f"  (FreeCAD {version_string} not in source; using highest available: {source_ver})")
 
 # Track the actual install path - if it changes (due to migration), we need to reinstall
 last_install_path = addon_prefs.GetString("LastInstallPath", "")
@@ -351,6 +354,7 @@ def sync_group(source_path, target_path, group_name, file_filter=None):
 for subdir, destination in source_subdirs.items():
     source_path = os.path.join(source_dir, subdir)
     if os.path.exists(source_path):
+        # print(f"Syncing: {source_path} -> {destination}")
         os.makedirs(destination, exist_ok=True)
         if subdir == "Jobs":
 
