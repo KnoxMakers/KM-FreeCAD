@@ -9,7 +9,7 @@ import FreeCAD
 # locate this Init.py
 _this_file = inspect.getfile(inspect.currentframe())
 addon_dir = os.path.dirname(_this_file)
-FreeCAD.Console.PrintMessage(f"– Init running from: {addon_dir}\n")
+FreeCAD.Console.PrintMessage(f"- Init running from: {addon_dir}\n")
 
 # make sure we can import install.py
 if addon_dir not in sys.path:
@@ -57,7 +57,7 @@ addon_name, repo_url, branch = get_metadata(addon_dir)
 prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/KnoxMakersFreeCADManager")
 branch_override = prefs.GetString("BranchOverride", "")
 if branch_override:
-    FreeCAD.Console.PrintMessage(f"– Using branch override: {branch_override}\n")
+    FreeCAD.Console.PrintMessage(f"- Using branch override: {branch_override}\n")
     branch = branch_override
 
 
@@ -65,10 +65,10 @@ def check_latest_commit(addon_name=addon_name, repo_url=repo_url, branch=branch)
     """Check for the latest commit hash from GitHub API."""
 
     if not repo_url:
-        FreeCAD.Console.PrintWarning("– Could not determine repository URL from package.xml\n")
+        FreeCAD.Console.PrintWarning("- Could not determine repository URL from package.xml\n")
         return "unknown"
 
-    FreeCAD.Console.PrintMessage(f"– Repository: {repo_url} (branch: {branch})\n")
+    FreeCAD.Console.PrintMessage(f"- Repository: {repo_url} (branch: {branch})\n")
 
     try:
         import urllib.request
@@ -78,13 +78,13 @@ def check_latest_commit(addon_name=addon_name, repo_url=repo_url, branch=branch)
         # Extract owner/repo from URL
         match = re.search(r'github\.com[/:]([^/]+)/([^/\.]+)', repo_url)
         if not match:
-            FreeCAD.Console.PrintWarning("– Could not parse GitHub URL\n")
+            FreeCAD.Console.PrintWarning("- Could not parse GitHub URL\n")
             return "unknown"
 
         owner, repo = match.groups()
         api_url = f"https://api.github.com/repos/{owner}/{repo}/commits/{branch}"
 
-        FreeCAD.Console.PrintMessage(f"– Checking GitHub API for latest commit...\n")
+        FreeCAD.Console.PrintMessage(f"- Checking GitHub API for latest commit...\n")
 
         # Make HTTP request to GitHub API
         req = urllib.request.Request(api_url)
@@ -94,11 +94,11 @@ def check_latest_commit(addon_name=addon_name, repo_url=repo_url, branch=branch)
             data = json.loads(response.read().decode('utf-8'))
             full_hash = data.get('sha', 'unknown')
             short_hash = full_hash[:7]
-            FreeCAD.Console.PrintMessage(f"– Latest GitHub commit: {short_hash}\n")
+            FreeCAD.Console.PrintMessage(f"- Latest GitHub commit: {short_hash}\n")
             return short_hash
 
     except Exception as e:
-        FreeCAD.Console.PrintWarning(f"– Error checking for updates: {e}\n")
+        FreeCAD.Console.PrintWarning(f"- Error checking for updates: {e}\n")
         return "unknown"
 
 
@@ -108,7 +108,7 @@ current_hash = check_latest_commit(addon_dir)
 # load stored hash from prefs
 prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/KnoxMakersFreeCADManager")
 last_hash = prefs.GetString("LastInstalledHash", "")
-FreeCAD.Console.PrintMessage(f"– Last installed: {last_hash}\n")
+FreeCAD.Console.PrintMessage(f"- Last installed: {last_hash}\n")
 
 # check FreeCAD version
 version = FreeCAD.Version()
@@ -118,8 +118,8 @@ current_version = f"v{major}-{minor}"
 
 # check installed version history
 installed_versions = prefs.GetString("InstalledVersions", "")
-FreeCAD.Console.PrintMessage(f"– FreeCAD version: {current_version}\n")
-FreeCAD.Console.PrintMessage(f"– Installed for versions: {installed_versions or 'none'}\n")
+FreeCAD.Console.PrintMessage(f"- FreeCAD version: {current_version}\n")
+FreeCAD.Console.PrintMessage(f"- Installed for versions: {installed_versions or 'none'}\n")
 
 # parse version list and check if current version has been installed
 version_list = [v.strip() for v in installed_versions.split(",") if v.strip()]
@@ -128,7 +128,7 @@ version_already_installed = current_version in version_list
 # Check if migration was detected (path changed due to versioned directory migration)
 migration_detected = prefs.GetBool("MigrationDetected", False)
 if migration_detected:
-    FreeCAD.Console.PrintMessage("– Migration detected, forcing reinstall\n")
+    FreeCAD.Console.PrintMessage("- Migration detected, forcing reinstall\n")
 
 # run installer if:
 # - hash changed (new addon version), OR
@@ -153,7 +153,7 @@ def _self_update_zip(zip_url, target_dir):
     # Locked files (e.g. __pycache__/*.pyc) are skipped silently and overwritten
     # by copytree below, which succeeds even when the file is open on Windows.
     if os.path.isdir(target_dir):
-        FreeCAD.Console.PrintMessage(f"– Pre-cleaning addon directory...\n")
+        FreeCAD.Console.PrintMessage(f"- Pre-cleaning addon directory...\n")
         for root, dirs, files in os.walk(target_dir, topdown=False):
             for name in files:
                 try:
@@ -166,7 +166,7 @@ def _self_update_zip(zip_url, target_dir):
                 except OSError:
                     pass  # not empty (locked files still inside) — leave it
 
-    FreeCAD.Console.PrintMessage(f"– Downloading {zip_url}...\n")
+    FreeCAD.Console.PrintMessage(f"- Downloading {zip_url}...\n")
     with tempfile.NamedTemporaryFile(delete=False, suffix='.zip') as f:
         tmp = f.name
     try:
@@ -188,7 +188,7 @@ def _self_update_zip(zip_url, target_dir):
 if needs_install:
     try:
         # Update the addon from GitHub
-        FreeCAD.Console.PrintMessage(f"– Updating addon from GitHub...\n")
+        FreeCAD.Console.PrintMessage(f"- Updating addon from GitHub...\n")
 
         # Build the zip URL from package.xml metadata
         if repo_url and 'github.com' in repo_url:
@@ -201,7 +201,7 @@ if needs_install:
 
         _self_update_zip(zip_url, addon_dir)
 
-        FreeCAD.Console.PrintMessage(f"– Addon updated successfully\n")
+        FreeCAD.Console.PrintMessage(f"- Addon updated successfully\n")
 
         # Now run the install to copy files to user directories
         import install
