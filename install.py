@@ -39,6 +39,32 @@ except Exception as e:
     print(f"Warning: Version detection error: {e}")
     print(f"Assuming standard FreeCAD {version_string}")
 
+def _most_recent_source_version(addon_dir, current_major, current_minor):
+    """
+    Find the highest versioned CAMAssets/v#-#/Tools directory in our addon source
+    that is <= the current FreeCAD version, mirroring FreeCAD's own
+    mostRecentAvailableConfigVersion logic from ApplicationDirectories.cpp.
+
+    Source layout:
+      Tools/              <- FreeCAD 1.0.x (handled by the caller, not this function)
+      CAMAssets/v1-1/Tools <- FreeCAD 1.1
+      CAMAssets/v1-2/Tools <- FreeCAD 1.2+
+
+    Returns e.g. "v1-2", or None if no versioned source directory exists
+    (caller should fall back to the legacy root Tools/ directory).
+    """
+    camassets_source = os.path.join(addon_dir, "CAMAssets")
+    if not os.path.isdir(camassets_source):
+        return None
+    for check_major in range(current_major, 0, -1):
+        start_minor = current_minor if check_major == current_major else 99
+        for check_minor in range(start_minor, -1, -1):
+            version_dir = f"v{check_major}-{check_minor}"
+            if os.path.isdir(os.path.join(camassets_source, version_dir, "Tools")):
+                return version_dir
+    return None
+
+
 # Determine the correct directory structure based on version
 if major < 1 or (major == 1 and minor < 1):
     # FreeCAD 1.0.x - use legacy structure without CAMAssets
@@ -65,23 +91,23 @@ else:
         os.makedirs(freecad_assets_dir)
         print(f"Created CAMAssets directory at: {freecad_assets_dir}")
 
-    # Determine source directory based on whether we're in versioned structure
-    # For CAM+ builds, override the source version
-    source_ver = source_version_override if source_version_override else version_string
+    # Determine source directory by scanning our own CAMAssets/ for the highest
+    # versioned Tools directory that is <= the current FreeCAD version.
+    # CAM+ builds override the source version regardless.
+    if source_version_override:
+        source_ver = source_version_override
+    else:
+        source_ver = _most_recent_source_version(os.path.dirname(__file__), major, minor)
 
-    if os.path.basename(os.path.normpath(freecad_assets_dir)) == version_string:
-        # Using versioned structure - source from versioned addon directory
+    if source_ver:
         source_tools_base = os.path.join("CAMAssets", source_ver, "Tools")
-        if source_version_override:
+        if source_ver != version_string:
+            print(f"FreeCAD {version_string}: using source from: {source_tools_base}")
+        elif source_version_override:
             print(f"Using source files from: {source_tools_base}")
     else:
-        # Using non-versioned structure - source from base tools
-        # For CAM+ builds, still use the overridden versioned source
-        if source_version_override:
-            source_tools_base = os.path.join("CAMAssets", source_version_override, "Tools")
-            print(f"Using source files from: {source_tools_base}")
-        else:
-            source_tools_base = "Tools"
+        # No versioned source found — fall back to legacy root Tools/ (1.0 layout)
+        source_tools_base = "Tools"
 
 # Track the actual install path - if it changes (due to migration), we need to reinstall
 last_install_path = addon_prefs.GetString("LastInstallPath", "")
